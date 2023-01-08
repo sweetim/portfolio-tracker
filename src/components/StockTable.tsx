@@ -1,6 +1,33 @@
-import { Table, Avatar } from 'antd';
+import { Table, Avatar } from 'antd'
+import { ColumnsType, SortOrder } from 'antd/es/table/interface'
+import { RakutenRawData } from '../parser/rakuten'
 
-function StockTable({ input }) {
+function StockTable({ input }: RakutenRawData) {
+    const dataSource = Object.entries(input)
+        .map(([k, v]) => {
+            const { account, ...others } = v
+            const { total, ...otherAccount } = account
+
+            let children = undefined
+            if (Object.entries(otherAccount).length > 1) {
+                children = Object.entries(otherAccount)
+                    .map(([type, v]: [string, any]) => ({
+                        key: `${k}/${type}`,
+                        type,
+                        ...v
+                    }))
+            }
+
+            return {
+                key: k,
+                ...others,
+                ...total,
+                type: '',
+                children
+            }
+        })
+
+
     const defaultNumberRenderer = (input: number) => input.toFixed(2)
     const defaultStyleForChange = (input_1: number, input_2: number = 0) => ({
         style: {
@@ -9,12 +36,16 @@ function StockTable({ input }) {
         }
     })
 
-    const columns = [
+    const columns: ColumnsType<any> = [
         {
             title: '',
             dataIndex: 'symbol',
             key: 'symbol',
+            width: 100,
+            fixed: 'left',
             render: (symbol) => {
+                if (!symbol) return ''
+
                 const LUT = {
                     SHOP: "shopify",
                     NVDA: "nvidia",
@@ -48,6 +79,17 @@ function StockTable({ input }) {
             }
         },
         {
+            title: '',
+            dataIndex: 'symbol',
+            key: 'symbol',
+            width: 100,
+        },
+        {
+            title: 'Type',
+            dataIndex: 'type',
+            key: 'type'
+        },
+        {
             title: 'Units',
             dataIndex: 'numberOfShares',
             key: 'numberOfShares',
@@ -71,40 +113,47 @@ function StockTable({ input }) {
             dataIndex: 'profit_percentage',
             key: 'profit_percentage',
             render: defaultNumberRenderer,
-            onCell: (r) => defaultStyleForChange(r.profit_percentage)
+            onCell: (r) => defaultStyleForChange(r.profit_percentage),
+            sorter: (a, b) => a.profit_percentage - b.profit_percentage,
         },
         {
             title: 'Value (USD)',
             dataIndex: 'marketValue_usd',
             key: 'marketValue_usd',
-            render: defaultNumberRenderer
+            render: defaultNumberRenderer,
+            sorter: (a, b) => a.marketValue_usd - b.marketValue_usd,
         },
+        // {
+        //     title: 'Value (JPY)',
+        //     dataIndex: 'marketValue_jpy',
+        //     key: 'marketValue_jpy',
+        //     sorter: (a, b) => a.marketValue_jpy - b.marketValue_jpy,
+        // },
         {
-            title: 'Value (JPY)',
-            dataIndex: 'marketValue_jpy',
-            key: 'marketValue_jpy'
-        },
-        {
-            title: 'P/L (JPY)',
-            dataIndex: 'profit_jpy',
-            key: 'profit_jpy',
-            onCell: (r) => defaultStyleForChange(r.profit_jpy)
+            title: 'P/L (USD)',
+            dataIndex: 'profit_usd',
+            key: 'profit_usd',
+            render: defaultNumberRenderer,
+            onCell: (r) => defaultStyleForChange(r.profit_usd),
+            sorter: (a, b) => a.profit_usd - b.profit_usd,
         },
         {
             title: 'Ratio (%)',
             dataIndex: 'compositionRatio',
             key: 'compositionRatio',
-            render: defaultNumberRenderer
+            render: defaultNumberRenderer,
+            sorter: (a, b) => a.compositionRatio - b.compositionRatio,
+            // sortOrder: 'descend'
         },
     ]
 
     return <Table
+    scroll={{ x: 1000 }}
+
         sticky={true}
-        dataSource={input}
+        dataSource={dataSource}
         columns={columns}
-        pagination={{
-            pageSize: 100
-        }}
+        pagination={false}
     />
 }
 
