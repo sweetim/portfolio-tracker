@@ -79,10 +79,10 @@ function StockTable({ input }: RakutenRawData) {
 
                 return (
                     <Row gutter={8} align="middle">
-                        <Col className="gutter-row" >
+                        <Col>
                             {avatar}
                         </Col>
-                        <Col className="gutter-row" >
+                        <Col>
                             {symbol}
                         </Col>
                     </Row>
