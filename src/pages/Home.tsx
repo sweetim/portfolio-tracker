@@ -8,12 +8,10 @@ import { useNavigate } from 'react-router-dom';
 import { parseRakutenRawData } from '../parser/rakuten'
 
 function Home() {
-    const DEFAULT_TEXT = ``
-
     const { Content } = Layout
     const { TextArea } = Input;
 
-    const [ rawData, setRawData ] = useState(DEFAULT_TEXT)
+    const [ rawData, setRawData ] = useState('')
     const [ numberOfCompanies, setNumberOfCompanies ] = useState(0)
 
     const navigate = useNavigate()
@@ -25,19 +23,14 @@ function Home() {
         navigate('/app', {
             state: data
         })
-
-        console.log(parseRakutenRawData(rawData))
     }
 
     const textAreaChangeHandler = (e) => {
-        console.log('here')
         setRawData(e.target.value)
 
         const data = parseRakutenRawData(e.target.value)
         setNumberOfCompanies(Object.keys(data).length)
     }
-
-
 
     return (
         <Layout style={{ height: "100vh" }}>
@@ -46,7 +39,7 @@ function Home() {
                 <TextArea
                     autoSize={{ minRows: 6, maxRows: 30 }}
                     bordered={false}
-                    value={DEFAULT_TEXT}
+                    value={rawData}
                     placeholder="paste the table here"
                     onChange={textAreaChangeHandler} />
 
