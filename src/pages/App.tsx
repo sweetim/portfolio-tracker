@@ -6,13 +6,24 @@ import {
 } from '@ant-design/icons';
 
 import { useState } from "react"
-import { useLocation } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 
 import { StockTable, StockPieChart, StockTreeMap } from '../components';
+import { useEffect } from 'react';
 
 function App() {
     const location = useLocation()
+    const navigate = useNavigate()
+
     const { state: data } = location
+
+    useEffect(() => {
+        if (!data) navigate('/')
+    }, [data])
+
+    if (!data) {
+        return
+    }
 
     const flattenToTotalData = Object.entries(data)
         .map(([k, v]) => {

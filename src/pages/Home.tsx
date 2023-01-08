@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { parseRakutenRawData } from '../parser/rakuten'
 
 function Home() {
-    const { Content, Footer } = Layout
+    const { Content } = Layout
     const { TextArea } = Input;
     const { Title, Paragraph } = Typography;
 
