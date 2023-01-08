@@ -1,5 +1,5 @@
-import { Table, Avatar } from 'antd'
-import { ColumnsType, SortOrder } from 'antd/es/table/interface'
+import { Table, Avatar, Col, Row } from 'antd'
+import { ColumnsType } from 'antd/es/table/interface'
 import { RakutenRawData } from '../parser/rakuten'
 
 function StockTable({ input }: RakutenRawData) {
@@ -41,7 +41,7 @@ function StockTable({ input }: RakutenRawData) {
             title: '',
             dataIndex: 'symbol',
             key: 'symbol',
-            width: 100,
+            width: 180,
             fixed: 'left',
             render: (symbol) => {
                 if (!symbol) return ''
@@ -73,16 +73,21 @@ function StockTable({ input }: RakutenRawData) {
                     RIOT: "riot-blockchain"
                 }
 
-                return LUT[symbol]
+                const avatar = LUT[symbol]
                     ? <Avatar size={36} src={`https://s3-symbol-logo.tradingview.com/${LUT[symbol]}.svg`} />
                     : <Avatar size={36}>{symbol}</Avatar>
+
+                return (
+                    <Row gutter={8} align="middle">
+                        <Col className="gutter-row" >
+                            {avatar}
+                        </Col>
+                        <Col className="gutter-row" >
+                            {symbol}
+                        </Col>
+                    </Row>
+                )
             }
-        },
-        {
-            title: '',
-            dataIndex: 'symbol',
-            key: 'symbol',
-            width: 100,
         },
         {
             title: 'Type',
@@ -148,8 +153,7 @@ function StockTable({ input }: RakutenRawData) {
     ]
 
     return <Table
-    scroll={{ x: 1000 }}
-
+        scroll={{ x: 1000 }}
         sticky={true}
         dataSource={dataSource}
         columns={columns}
