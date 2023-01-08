@@ -17,6 +17,11 @@ function StockPieChart({ input }) {
         //   labelHeight: 28,
         //   content: '{name} {percentage}',
         // },
+        legend: {
+            layout: 'horizontal',
+            position: 'bottom',
+            flipPage: false,
+        },
         label: {
             type: 'inner',
             offset: '-30%',
@@ -35,6 +40,7 @@ function StockPieChart({ input }) {
     }
 
     return (
+        // @ts-ignore
         <Pie
             style={{ minHeight: "100%" }}
             {...config} />
