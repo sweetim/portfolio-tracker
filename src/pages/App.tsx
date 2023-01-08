@@ -1,5 +1,4 @@
-import { ConfigProvider, Table, Layout, theme, Avatar, Radio, Select } from 'antd';
-
+import { Layout, Radio } from 'antd';
 import {
     PieChartOutlined,
     TableOutlined,
@@ -15,7 +14,7 @@ function App() {
     const location = useLocation()
     const { state: data } = location
 
-    const dataSource = Object.entries(data)
+    const flattenToTotalData = Object.entries(data)
         .map(([k, v]) => {
             const { account, ...others } = v as any
 
@@ -25,7 +24,6 @@ function App() {
                 ...account.total
             }
         })
-        .sort((a, b) => b.compositionRatio - a.compositionRatio)
 
     const { Content, Header } = Layout
 
@@ -37,9 +35,9 @@ function App() {
 
     const renderChart = () => {
         const CHART_TYPES = {
-            "StockTable": <StockTable input={dataSource} />,
-            "StockPieChart": <StockPieChart input={dataSource} />,
-            "StockTreeMap": <StockTreeMap input={dataSource} />
+            "StockTable": <StockTable input={data} />,
+            "StockPieChart": <StockPieChart input={flattenToTotalData} />,
+            "StockTreeMap": <StockTreeMap input={flattenToTotalData} />
         }
 
         return CHART_TYPES[chartType]

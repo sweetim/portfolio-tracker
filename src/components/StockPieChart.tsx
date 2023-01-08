@@ -1,12 +1,14 @@
 import { Pie } from '@ant-design/plots';
 
 function StockPieChart({ input }) {
+    const data = input.map(({ symbol, compositionRatio }) => ({
+        type: symbol,
+        value: compositionRatio
+    })).sort((a, b) => b.value - a.value)
+
     const config = {
         appendPadding: 10,
-        data: input.map(({ symbol, compositionRatio }) => ({
-            type: symbol,
-            value: compositionRatio
-        })),
+        data,
         angleField: 'value',
         colorField: 'type',
         radius: 0.75,
@@ -18,9 +20,7 @@ function StockPieChart({ input }) {
         label: {
             type: 'inner',
             offset: '-30%',
-            content: ({ type, value }) => {
-                return (value) > 1 ? `${type} ${value.toFixed(2)}%` : ""
-            },
+            content: ({ type, value }) => (value) > 1 ? `${type} ${value.toFixed(2)}%` : '',
             style: {
                 fontSize: 14,
                 textAlign: 'center',
