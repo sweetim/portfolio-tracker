@@ -13,7 +13,7 @@ function StockTreeMap({ input }) {
     const config = {
         data,
         legend: false,
-        color: ['#f23645', '#363a45', '#089950'],
+        color: [ '#f23645', '#363a45', '#089950' ],
         colorField: 'profit_percentage',
         label: {
             content: ({ name, profit_percentage }) => {
@@ -22,6 +22,7 @@ function StockTreeMap({ input }) {
         },
     };
 
+    // @ts-ignore
     return <Treemap
         style={{ minHeight: "100%" }}
         {...config} />
