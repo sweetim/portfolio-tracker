@@ -1,8 +1,9 @@
-import { Layout, Radio } from 'antd';
+import { Button, Col, Layout, Radio, Row } from 'antd';
 import {
     PieChartOutlined,
     TableOutlined,
-    HeatMapOutlined
+    HeatMapOutlined,
+    SettingOutlined
 } from '@ant-design/icons';
 
 import { useState } from "react"
@@ -54,16 +55,34 @@ function App() {
         return CHART_TYPES[chartType]
     }
 
+    const settingButtonClickHandler = () => {
+        navigate('/')
+    }
+
     return (
         <Layout style={{ height: "100vh" }}>
             <Header>
-                <Radio.Group value={chartType} onChange={onChartTypeChangeHandler}>
-                    <Radio.Button value="StockTreeMap"><HeatMapOutlined /></Radio.Button>
-                    <Radio.Button value="StockTable"><TableOutlined /></Radio.Button>
-                    <Radio.Button value="StockPieChart"><PieChartOutlined /></Radio.Button>
-                </Radio.Group>
+                <Row>
+                    <Col>
+                        <Radio.Group value={chartType} onChange={onChartTypeChangeHandler}>
+                            <Radio.Button value="StockTreeMap"><HeatMapOutlined /></Radio.Button>
+                            <Radio.Button value="StockTable"><TableOutlined /></Radio.Button>
+                            <Radio.Button value="StockPieChart"><PieChartOutlined /></Radio.Button>
+                        </Radio.Group>
+                    </Col>
+                    <Col flex="auto"></Col>
+                    <Col>
+                        <Button
+                            onClick={settingButtonClickHandler}
+                            shape="circle"
+                            icon={<SettingOutlined />} />
+                    </Col>
+                </Row>
+
+
             </Header>
 
+            <Col flex="auto"></Col>
             <Content>
                 {renderChart()}
             </Content>
