@@ -29,7 +29,7 @@ function App() {
 
     const { Content, Header } = Layout
 
-    const [chartType, setChartType] = useState("treeMap")
+    const [chartType, setChartType] = useState("StockTreeMap")
 
     const onChartTypeChangeHandler = (e) => {
         setChartType(e.target.value)
@@ -37,22 +37,21 @@ function App() {
 
     const renderChart = () => {
         const CHART_TYPES = {
-            "table": <StockTable input={dataSource} />,
-            "pieChart": <StockPieChart input={dataSource} />,
-            "treeMap": <StockTreeMap input={dataSource} />
+            "StockTable": <StockTable input={dataSource} />,
+            "StockPieChart": <StockPieChart input={dataSource} />,
+            "StockTreeMap": <StockTreeMap input={dataSource} />
         }
 
         return CHART_TYPES[chartType]
     }
 
     return (
-
         <Layout style={{ height: "100vh" }}>
             <Header>
                 <Radio.Group value={chartType} onChange={onChartTypeChangeHandler}>
-                    <Radio.Button value="treeMap"><HeatMapOutlined /></Radio.Button>
-                    <Radio.Button value="table"><TableOutlined /></Radio.Button>
-                    <Radio.Button value="pieChart"><PieChartOutlined /></Radio.Button>
+                    <Radio.Button value="StockTreeMap"><HeatMapOutlined /></Radio.Button>
+                    <Radio.Button value="StockTable"><TableOutlined /></Radio.Button>
+                    <Radio.Button value="StockPieChart"><PieChartOutlined /></Radio.Button>
                 </Radio.Group>
             </Header>
 
