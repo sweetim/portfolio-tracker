@@ -1,26 +1,20 @@
 import { Table, Avatar } from 'antd';
 
 function StockTable({ input }) {
-    const columns = Object.keys(input[0]).map((k, i) => ({
-        title: k,
-        dataIndex: k,
-        key: k,
-        render: (text, r) => {
-            if (Number(text) && i !== 2) {
-                return {
-                    props: {
-                        style: i > 8
-                            ? {
-                                color: text < 0 ? "#f23645" : "lime",
-                                fontWeight: "bold"
-                            }
-                            : {}
-                    },
-                    children: text.toFixed(2)
-                }
-            }
+    const defaultNumberRenderer = (input: number) => input.toFixed(2)
+    const defaultStyleForChange = (input: number) => ({
+        style: {
+            color: input < 0 ? '#f23645' : 'lime',
+            fontWeight: 'bold'
+        }
+    })
 
-            if (i === 0) {
+    const columns = [
+        {
+            title: '',
+            dataIndex: 'symbol',
+            key: 'symbol',
+            render: (symbol) => {
                 const LUT = {
                     SHOP: "shopify",
                     NVDA: "nvidia",
@@ -49,14 +43,58 @@ function StockTable({ input }) {
                     RIOT: "riot-blockchain"
                 }
 
-                return {
-                    children: <Avatar size={36} src={`https://s3-symbol-logo.tradingview.com/${LUT[r.symbol]}.svg`} />
-                }
+                return <Avatar size={36} src={`https://s3-symbol-logo.tradingview.com/${LUT[symbol]}.svg`} />
             }
-
-            return text
+        },
+        {
+            title: 'Units',
+            dataIndex: 'numberOfShares',
+            key: 'numberOfShares',
+            onCell: ({ numberOfShares }) => numberOfShares
+        },
+        {
+            title: 'Avg Open',
+            dataIndex: 'averageAcquiredPrice_usd',
+            key: 'averageAcquiredPrice_usd',
+            render: defaultNumberRenderer
+        },
+        {
+            title: 'Price (USD)',
+            dataIndex: 'currentPrice_usd',
+            key: 'currentPrice_usd',
+            render: defaultNumberRenderer
+        },
+        {
+            title: 'Value (USD)',
+            dataIndex: 'marketValue_usd',
+            key: 'marketValue_usd',
+            render: defaultNumberRenderer
+        },
+        {
+            title: 'Value (JPY)',
+            dataIndex: 'marketValue_jpy',
+            key: 'marketValue_jpy'
+        },
+        {
+            title: 'Ratio (%)',
+            dataIndex: 'compositionRatio',
+            key: 'compositionRatio',
+            render: defaultNumberRenderer
+        },
+        {
+            title: 'P/L (%)',
+            dataIndex: 'profit_percentage',
+            key: 'profit_percentage',
+            render: defaultNumberRenderer,
+            onCell: (r) => defaultStyleForChange(r.profit_percentage)
+        },
+        {
+            title: 'P/L (JPY)',
+            dataIndex: 'profit_jpy',
+            key: 'profit_jpy',
+            onCell: (r) => defaultStyleForChange(r.profit_jpy)
         }
-    }))
+    ]
 
     return <Table
         sticky={true}
