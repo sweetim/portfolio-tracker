@@ -2,6 +2,8 @@ import { Table, Avatar, Col, Row } from 'antd'
 import { ColumnsType } from 'antd/es/table/interface'
 import { RakutenRawData } from '../parser/rakuten'
 
+import './StockTable.css'
+
 function StockTable({ input }: RakutenRawData) {
     const dataSource = Object.entries(input)
         .map(([k, v]) => {
@@ -26,7 +28,6 @@ function StockTable({ input }: RakutenRawData) {
                 children
             }
         })
-
 
     const defaultNumberRenderer = (input: number) => input.toFixed(2)
     const defaultStyleForChange = (input_1: number, input_2: number = 0) => ({

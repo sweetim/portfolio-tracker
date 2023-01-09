@@ -14,6 +14,7 @@ function StockTreeMap({ input }) {
 
     const config = {
         data,
+        animation: false,
         legend: false,
         color: ['#f23645', '#363a45', 'lime'],
         colorField: 'profit_percentage',

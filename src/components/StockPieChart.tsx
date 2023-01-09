@@ -9,6 +9,7 @@ function StockPieChart({ input }) {
     const config = {
         appendPadding: 10,
         data,
+        animation: false,
         angleField: 'value',
         colorField: 'type',
         radius: 0.75,
