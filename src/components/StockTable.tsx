@@ -149,7 +149,7 @@ function StockTable({ input }: RakutenRawData) {
             key: 'compositionRatio',
             render: defaultNumberRenderer,
             sorter: (a, b) => a.compositionRatio - b.compositionRatio,
-            // sortOrder: 'descend'
+            defaultSortOrder : 'descend'
         },
     ]
 
