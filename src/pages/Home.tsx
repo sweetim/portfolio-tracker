@@ -5,7 +5,7 @@ import { CheckOutlined, RiseOutlined } from '@ant-design/icons';
 
 import { useNavigate } from 'react-router-dom';
 
-import { parseRakutenRawData } from '../parser/rakuten'
+import { parseRakutenData } from '@/parser/rakuten'
 
 function Home() {
     const { Content } = Layout
@@ -19,11 +19,11 @@ function Home() {
     const navigate = useNavigate()
 
     const submitButtonHandler = () => {
-        const data = parseRakutenRawData(rawData)
-        setNumberOfCompanies(Object.keys(data).length)
+        const userStockRecord = parseRakutenData(rawData)
+        setNumberOfCompanies(Object.keys(userStockRecord).length)
 
         navigate('/app', {
-            state: data
+            state: userStockRecord
         })
     }
 
@@ -31,7 +31,7 @@ function Home() {
         setRawData(e.target.value)
 
         try {
-            const data = parseRakutenRawData(e.target.value)
+            const data = parseRakutenData(e.target.value)
             setNumberOfCompanies(Object.keys(data).length)
             setIsDataOk(true)
         } catch (e) {
