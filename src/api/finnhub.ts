@@ -43,7 +43,7 @@ export async function getStockQuote(symbol: string): Promise<StockQuote> {
     const {
         c: currentPrice,
         d: change,
-        dp: change_percent,
+        dp: change_percentage,
         h: high,
         l: low,
         o: openPrice,
@@ -52,10 +52,11 @@ export async function getStockQuote(symbol: string): Promise<StockQuote> {
     } = data
 
     return {
+        symbol,
         timestamp,
         currentPrice,
         change,
-        change_percent,
+        change_percentage,
         high,
         low,
         openPrice,
