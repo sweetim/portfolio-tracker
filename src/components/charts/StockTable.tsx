@@ -15,7 +15,7 @@ const StockTable: FC<VisualizationItemsProps> = ({ input, currency }) => {
         }
     })
 
-    const columns: ColumnsType<any> = [
+    const columns: ColumnsType<VisualizationItemsProps> = [
         {
             title: '',
             dataIndex: 'symbol',

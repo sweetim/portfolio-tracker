@@ -53,7 +53,7 @@ export function convertToSymbolObjects<T extends { symbol: string }>(input: T[])
     return input.reduce((acc, item) => {
         const { symbol } = item
         return acc[symbol] = item, acc
-    }, {})
+    }, {} as { [symbol: string]: T })
 }
 
 if (import.meta.vitest) {
@@ -221,14 +221,16 @@ export function updateUserStockHoldingFrom(
                 timestamp: quotes[symbol].timestamp,
                 marketValue: quotes[symbol].currentPrice * userStockData.numberOfShares,
                 compositionRatio: 0,
-                profit_percentage: (quotes[symbol].currentPrice - userStockData.averageAcquiredPrice) / userStockData.averageAcquiredPrice * 100,
-                profit: (quotes[symbol].currentPrice - userStockData.averageAcquiredPrice) * userStockData.numberOfShares,
+                profit_percentage: (quotes[symbol].currentPrice - userStockData.averageAcquiredPrice)
+                    / userStockData.averageAcquiredPrice * 100,
+                profit: (quotes[symbol].currentPrice - userStockData.averageAcquiredPrice)
+                    * userStockData.numberOfShares,
             }
         }
 
-        const totalNumberOfShares = input[symbol].summary[currency].numberOfShares
+        const totalNumberOfShares = input[symbol]?.summary?.[currency]?.numberOfShares || 0
         if (totalNumberOfShares > 0) {
-            const totalAverageAcquiredPrice = input[symbol].summary[currency].averageAcquiredPrice
+            const totalAverageAcquiredPrice = input[symbol]?.summary?.[currency]?.averageAcquiredPrice || 0
             const userStockValue = userStockData.averageAcquiredPrice * userStockData.numberOfShares
             const totalStockValue = totalNumberOfShares * totalAverageAcquiredPrice
 
@@ -244,10 +246,17 @@ export function updateUserStockHoldingFrom(
         input[symbol].summary[currency].change_percentage = quotes[symbol].change_percentage
         input[symbol].summary[currency].openPrice = quotes[symbol].openPrice
         input[symbol].summary[currency].timestamp = quotes[symbol].timestamp
-        input[symbol].summary[currency].marketValue = quotes[symbol].currentPrice * input[symbol].summary[currency].numberOfShares
+        input[symbol].summary[currency].marketValue =
+            quotes[symbol].currentPrice * input[symbol].summary[currency].numberOfShares
+
         input[symbol].summary[currency].compositionRatio = 0
-        input[symbol].summary[currency].profit_percentage = (quotes[symbol].currentPrice - input[symbol].summary[currency].averageAcquiredPrice) / input[symbol].summary[currency].averageAcquiredPrice * 100
-        input[symbol].summary[currency].profit = (quotes[symbol].currentPrice - input[symbol].summary[currency].averageAcquiredPrice) * input[symbol].summary[currency].numberOfShares
+        input[symbol].summary[currency].profit_percentage =
+            (quotes[symbol].currentPrice - input[symbol].summary[currency].averageAcquiredPrice)
+            / input[symbol].summary[currency].averageAcquiredPrice * 100
+
+        input[symbol].summary[currency].profit =
+            (quotes[symbol].currentPrice - input[symbol].summary[currency].averageAcquiredPrice)
+            * input[symbol].summary[currency].numberOfShares
     })
 }
 
@@ -479,98 +488,202 @@ if (import.meta.vitest) {
 export function updateUserStockHoldingCompositionRatio(input: UserStockHolding) {
     const totalMarketValue = Object.values(input)
         .reduce((acc, { summary }) => {
-            Object.keys(summary).forEach(currency => {
+            if (!summary) {
+                return acc
+            }
+
+            Object.keys(summary).forEach((currency) => {
                 acc[currency] ??= 0
-                acc[currency] += summary[currency].marketValue
+                acc[currency] += summary?.[currency as StockCurrency]?.marketValue || 0
             })
 
             return acc
-        }, {})
+        }, {} as { [currency: string]: number })
+
+    if (Object.keys(totalMarketValue).length === 0) {
+        return
+    }
 
     iterateUserStockHolding(input, ({
         currency,
         accountType,
         symbol
     }) => {
-        input[symbol].accounts[accountType][currency].compositionRatio =
-            input[symbol].accounts[accountType][currency].marketValue / totalMarketValue[currency] * 100
+        if (input[symbol].accounts[accountType][currency]) {
+            const marketValue_accountType = input[symbol].accounts[accountType][currency]?.marketValue || 0
 
-        input[symbol].summary[currency].compositionRatio =
-            input[symbol].summary[currency].marketValue / totalMarketValue[currency] * 100
+            input[symbol].accounts[accountType][currency]!.compositionRatio =
+                marketValue_accountType / totalMarketValue[currency] * 100
+        }
+
+        if (input[symbol].summary) {
+            if (input[symbol].summary?.[currency]) {
+                const marketValue_summary = input[symbol].summary?.[currency]?.marketValue || 0
+
+                input[symbol].summary![currency]!.compositionRatio =
+                    marketValue_summary / totalMarketValue[currency] * 100
+            }
+        }
     })
 }
 
 if (import.meta.vitest) {
-    const { test, expect } = import.meta.vitest
+    const { describe, test, expect } = import.meta.vitest
 
-    test("should update the composition ratio", () => {
-        const input = {
-            "AMZN": {
-                profile: {
-                    country: "country",
-                    industry: "industry",
-                    logoUrl: "logoUrl",
-                    name: "AMZN",
-                    symbol: "AMZN"
+    describe("updateUserStockHoldingCompositionRatio", () => {
+        test.each([
+            {
+                input: {
+                    "AMZN": {
+                        accounts: {
+                            "特定": {
+                                usd: {
+                                    numberOfShares: 6,
+                                    averageAcquiredPrice: 91.06,
+                                    currentPrice: 100,
+                                    change: 100,
+                                    change_percentage: 0.1,
+                                    openPrice: 100,
+                                    timestamp: 100,
+                                    marketValue: 600,
+                                    compositionRatio: 0,
+                                    profit_percentage: 9.81770261366132,
+                                    profit: 53.639999999999986
+                                }
+                            },
+                        },
+                    }
                 },
-                accounts: {
-                    "特定": {
-                        usd: {
-                            numberOfShares: 6,
-                            averageAcquiredPrice: 91.06,
-                            currentPrice: 100,
-                            change: 100,
-                            change_percentage: 0.1,
-                            openPrice: 100,
-                            timestamp: 100,
-                            marketValue: 600,
-                            compositionRatio: 0,
-                            profit_percentage: 9.81770261366132,
-                            profit: 53.639999999999986
-                        }
-                    },
-                    "NISA": {
-                        usd: {
-                            numberOfShares: 20,
-                            averageAcquiredPrice: 105.18,
-                            currentPrice: 100,
-                            change: 100,
-                            change_percentage: 0.1,
-                            openPrice: 100,
-                            timestamp: 100,
-                            marketValue: 2000,
-                            compositionRatio: 0,
-                            profit_percentage: -4.924890663624269,
-                            profit: -103.60000000000014
-                        }
-                    },
-                },
-                summary: {
-                    usd: {
-                        numberOfShares: 26,
-                        averageAcquiredPrice: 101.92153846153847,
-                        currentPrice: 100,
-                        change: 100,
-                        change_percentage: 0.1,
-                        openPrice: 100,
-                        timestamp: 100,
-                        marketValue: 2600,
-                        compositionRatio: 0,
-                        profit_percentage: -1.8853114763996568,
-                        profit: -49.96000000000035
+                expected: {
+                    "AMZN": {
+                        accounts: {
+                            "特定": {
+                                usd: {
+                                    numberOfShares: 6,
+                                    averageAcquiredPrice: 91.06,
+                                    currentPrice: 100,
+                                    change: 100,
+                                    change_percentage: 0.1,
+                                    openPrice: 100,
+                                    timestamp: 100,
+                                    marketValue: 600,
+                                    compositionRatio: 0,
+                                    profit_percentage: 9.81770261366132,
+                                    profit: 53.639999999999986
+                                }
+                            },
+                        },
                     }
                 }
             },
-            "TSLA": {
-                profile: {
-                    country: "country",
-                    industry: "industry",
-                    logoUrl: "logoUrl",
-                    name: "TSLA",
-                    symbol: "TSLA"
+            {
+                input: {
+                    "AMZN": {
+                        accounts: {
+                            "特定": {
+                            },
+                        },
+                    }
                 },
-                accounts: {
-                    "NISA": {
+                expected: {
+                    "AMZN": {
+                        accounts: {
+                            "特定": {
+                            },
+                        },
+                    }
+                }
+            },
+        ])("should able to handle undefined object ($input)", ({ input, expected }) => {
+            updateUserStockHoldingCompositionRatio(input)
+
+            expect(input).toStrictEqual(expected)
+        })
+
+        test("should update the composition ratio", () => {
+            const input = {
+                "AMZN": {
+                    profile: {
+                        country: "country",
+                        industry: "industry",
+                        logoUrl: "logoUrl",
+                        name: "AMZN",
+                        symbol: "AMZN"
+                    },
+                    accounts: {
+                        "特定": {
+                            usd: {
+                                numberOfShares: 6,
+                                averageAcquiredPrice: 91.06,
+                                currentPrice: 100,
+                                change: 100,
+                                change_percentage: 0.1,
+                                openPrice: 100,
+                                timestamp: 100,
+                                marketValue: 600,
+                                compositionRatio: 0,
+                                profit_percentage: 9.81770261366132,
+                                profit: 53.639999999999986
+                            }
+                        },
+                        "NISA": {
+                            usd: {
+                                numberOfShares: 20,
+                                averageAcquiredPrice: 105.18,
+                                currentPrice: 100,
+                                change: 100,
+                                change_percentage: 0.1,
+                                openPrice: 100,
+                                timestamp: 100,
+                                marketValue: 2000,
+                                compositionRatio: 0,
+                                profit_percentage: -4.924890663624269,
+                                profit: -103.60000000000014
+                            }
+                        },
+                    },
+                    summary: {
+                        usd: {
+                            numberOfShares: 26,
+                            averageAcquiredPrice: 101.92153846153847,
+                            currentPrice: 100,
+                            change: 100,
+                            change_percentage: 0.1,
+                            openPrice: 100,
+                            timestamp: 100,
+                            marketValue: 2600,
+                            compositionRatio: 0,
+                            profit_percentage: -1.8853114763996568,
+                            profit: -49.96000000000035
+                        }
+                    }
+                },
+                "TSLA": {
+                    profile: {
+                        country: "country",
+                        industry: "industry",
+                        logoUrl: "logoUrl",
+                        name: "TSLA",
+                        symbol: "TSLA"
+                    },
+                    accounts: {
+                        "NISA": {
+                            usd: {
+                                numberOfShares: 15,
+                                averageAcquiredPrice: 38.46,
+                                currentPrice: 200,
+                                change: 200,
+                                change_percentage: 200,
+                                openPrice: 200,
+                                timestamp: 200,
+                                marketValue: 3000,
+                                compositionRatio: 0,
+                                profit_percentage: 420.0208008320333,
+                                profit: 2423.1
+                            }
+                        },
+                    },
+                    summary: {
                         usd: {
                             numberOfShares: 15,
                             averageAcquiredPrice: 38.46,
@@ -582,95 +695,95 @@ if (import.meta.vitest) {
                             marketValue: 3000,
                             compositionRatio: 0,
                             profit_percentage: 420.0208008320333,
-                            profit: 2423.1
+                            profit: 2423.1,
                         }
-                    },
-                },
-                summary: {
-                    usd: {
-                        numberOfShares: 15,
-                        averageAcquiredPrice: 38.46,
-                        currentPrice: 200,
-                        change: 200,
-                        change_percentage: 200,
-                        openPrice: 200,
-                        timestamp: 200,
-                        marketValue: 3000,
-                        compositionRatio: 0,
-                        profit_percentage: 420.0208008320333,
-                        profit: 2423.1,
                     }
                 }
             }
-        }
 
-        const expected = {
-            "AMZN": {
-                profile: {
-                    country: "country",
-                    industry: "industry",
-                    logoUrl: "logoUrl",
-                    name: "AMZN",
-                    symbol: "AMZN"
-                },
-                accounts: {
-                    "特定": {
+            const expected = {
+                "AMZN": {
+                    profile: {
+                        country: "country",
+                        industry: "industry",
+                        logoUrl: "logoUrl",
+                        name: "AMZN",
+                        symbol: "AMZN"
+                    },
+                    accounts: {
+                        "特定": {
+                            usd: {
+                                numberOfShares: 6,
+                                averageAcquiredPrice: 91.06,
+                                currentPrice: 100,
+                                change: 100,
+                                change_percentage: 0.1,
+                                openPrice: 100,
+                                timestamp: 100,
+                                marketValue: 600,
+                                compositionRatio: 10.714285714285714,
+                                profit_percentage: 9.81770261366132,
+                                profit: 53.639999999999986
+                            }
+                        },
+                        "NISA": {
+                            usd: {
+                                numberOfShares: 20,
+                                averageAcquiredPrice: 105.18,
+                                currentPrice: 100,
+                                change: 100,
+                                change_percentage: 0.1,
+                                openPrice: 100,
+                                timestamp: 100,
+                                marketValue: 2000,
+                                compositionRatio: 35.714285714285715,
+                                profit_percentage: -4.924890663624269,
+                                profit: -103.60000000000014
+                            }
+                        },
+                    },
+                    summary: {
                         usd: {
-                            numberOfShares: 6,
-                            averageAcquiredPrice: 91.06,
+                            numberOfShares: 26,
+                            averageAcquiredPrice: 101.92153846153847,
                             currentPrice: 100,
                             change: 100,
                             change_percentage: 0.1,
                             openPrice: 100,
                             timestamp: 100,
-                            marketValue: 600,
-                            compositionRatio: 10.714285714285714,
-                            profit_percentage: 9.81770261366132,
-                            profit: 53.639999999999986
+                            marketValue: 2600,
+                            compositionRatio: 46.42857142857143,
+                            profit_percentage: -1.8853114763996568,
+                            profit: -49.96000000000035
                         }
-                    },
-                    "NISA": {
-                        usd: {
-                            numberOfShares: 20,
-                            averageAcquiredPrice: 105.18,
-                            currentPrice: 100,
-                            change: 100,
-                            change_percentage: 0.1,
-                            openPrice: 100,
-                            timestamp: 100,
-                            marketValue: 2000,
-                            compositionRatio: 35.714285714285715,
-                            profit_percentage: -4.924890663624269,
-                            profit: -103.60000000000014
-                        }
-                    },
-                },
-                summary: {
-                    usd: {
-                        numberOfShares: 26,
-                        averageAcquiredPrice: 101.92153846153847,
-                        currentPrice: 100,
-                        change: 100,
-                        change_percentage: 0.1,
-                        openPrice: 100,
-                        timestamp: 100,
-                        marketValue: 2600,
-                        compositionRatio: 46.42857142857143,
-                        profit_percentage: -1.8853114763996568,
-                        profit: -49.96000000000035
                     }
-                }
-            },
-            "TSLA": {
-                profile: {
-                    country: "country",
-                    industry: "industry",
-                    logoUrl: "logoUrl",
-                    name: "TSLA",
-                    symbol: "TSLA"
                 },
-                accounts: {
-                    "NISA": {
+                "TSLA": {
+                    profile: {
+                        country: "country",
+                        industry: "industry",
+                        logoUrl: "logoUrl",
+                        name: "TSLA",
+                        symbol: "TSLA"
+                    },
+                    accounts: {
+                        "NISA": {
+                            usd: {
+                                numberOfShares: 15,
+                                averageAcquiredPrice: 38.46,
+                                currentPrice: 200,
+                                change: 200,
+                                change_percentage: 200,
+                                openPrice: 200,
+                                timestamp: 200,
+                                marketValue: 3000,
+                                compositionRatio: 53.57142857142857,
+                                profit_percentage: 420.0208008320333,
+                                profit: 2423.1
+                            }
+                        },
+                    },
+                    summary: {
                         usd: {
                             numberOfShares: 15,
                             averageAcquiredPrice: 38.46,
@@ -682,30 +795,15 @@ if (import.meta.vitest) {
                             marketValue: 3000,
                             compositionRatio: 53.57142857142857,
                             profit_percentage: 420.0208008320333,
-                            profit: 2423.1
+                            profit: 2423.1,
                         }
-                    },
-                },
-                summary: {
-                    usd: {
-                        numberOfShares: 15,
-                        averageAcquiredPrice: 38.46,
-                        currentPrice: 200,
-                        change: 200,
-                        change_percentage: 200,
-                        openPrice: 200,
-                        timestamp: 200,
-                        marketValue: 3000,
-                        compositionRatio: 53.57142857142857,
-                        profit_percentage: 420.0208008320333,
-                        profit: 2423.1,
                     }
                 }
             }
-        }
 
-        updateUserStockHoldingCompositionRatio(input)
+            updateUserStockHoldingCompositionRatio(input)
 
-        expect(input).toStrictEqual(expected)
+            expect(input).toStrictEqual(expected)
+        })
     })
 }
