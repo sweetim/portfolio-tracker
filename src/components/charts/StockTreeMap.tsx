@@ -1,11 +1,18 @@
+import { FC } from 'react';
 import { Treemap } from '@ant-design/plots';
 
-function StockTreeMap({ input }) {
-    const children = input.map(({ symbol, compositionRatio, profit_percentage }) => ({
-        name: symbol,
-        value: compositionRatio,
-        profit_percentage
-    }))
+import { VisualizationItemsProps } from '.';
+
+const StockTreeMap: FC<VisualizationItemsProps> = ({ input }) => {
+    const children = input.map((item) => {
+        const { symbol, compositionRatio, name: fullName, ...others } = item
+        return {
+            name: symbol,
+            value: compositionRatio,
+            fullName,
+            ...others
+        }
+    })
 
     const data = {
         name: 'root',

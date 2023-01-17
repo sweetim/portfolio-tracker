@@ -2,17 +2,11 @@ import { FC } from 'react'
 import { Table, Avatar, Col, Row, Tooltip } from 'antd'
 import { ColumnsType } from 'antd/es/table/interface'
 
-import { VisualizationItem } from './util';
-
 import './StockTable.css'
-import { StockCurrency } from '@/model/stocks';
 
-type StockTableProps = {
-    input: VisualizationItem[],
-    currency: StockCurrency
-}
+import { VisualizationItemsProps } from '.';
 
-const StockTable: FC<StockTableProps> = ({ input, currency }) => {
+const StockTable: FC<VisualizationItemsProps> = ({ input, currency }) => {
     const defaultNumberRenderer = (input: number) => input.toFixed(2)
     const defaultStyleForChange = (input_1: number, input_2: number = 0) => ({
         style: {
