@@ -14,7 +14,7 @@ import { StockTable, StockPieChart, StockTreeMap, Loading } from '../components'
 import { usePopulateUserStockHolding } from '@/hooks';
 import { StockCurrency, UserStockHolding } from '@/model/stocks';
 import { convertUserStockHoldingToVisualizationItem, VisualizationItem } from '@/components/charts/util';
-import { ChartType } from '@/components/charts';
+import { ChartType, VisualizationItemsProps } from '@/components/charts';
 
 
 function App() {
@@ -34,15 +34,10 @@ function App() {
     }
 
     const [ chartType, setChartType ] = useState<ChartType>("StockTable")
-    const [ currency, SetCurrency ] = useState<StockCurrency>("usd")
+    const [ currency, setCurrency ] = useState<StockCurrency>("usd")
+    const [ visualizationItems, setVisualizationItems ] = useState<VisualizationItem[]>([])
 
     const { isLoading, isError, data } = usePopulateUserStockHolding(input)
-
-    const onChartTypeChangeHandler = (e) => {
-        setChartType(e.target.value)
-    }
-
-    const [ visualizationItems, setVisualizationItems ] = useState<VisualizationItem[]>([])
 
     useMemo(() => {
         if (!isLoading) {
@@ -56,18 +51,27 @@ function App() {
             return <Loading />
         }
 
+        const visualizationConfig: VisualizationItemsProps = {
+            input: visualizationItems,
+            currency
+        }
+
         const CHART_TYPES = {
-            "StockTable": <StockTable input={visualizationItems} currency={currency} />,
-            // "StockPieChart": <StockPieChart input={flattenToTotalData} />,
-            // "StockTreeMap": <StockTreeMap input={flattenToTotalData} />
+            "StockTable": <StockTable {...visualizationConfig} />,
+            "StockPieChart": <StockPieChart {...visualizationConfig} />,
+            "StockTreeMap": <StockTreeMap {...visualizationConfig} />
         }
 
         console.log(visualizationItems)
         return CHART_TYPES[chartType]
-    }, [isLoading, isError, visualizationItems])
+    }, [chartType, isLoading, isError, visualizationItems])
 
     const settingButtonClickHandler = () => {
         navigate('/')
+    }
+
+    const onChartTypeChangeHandler = (e) => {
+        setChartType(e.target.value)
     }
 
     return (
