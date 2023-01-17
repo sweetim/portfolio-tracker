@@ -1,4 +1,4 @@
-import { Button, Col, Layout, Radio, Row } from 'antd';
+import { Button, Col, Layout, Radio, RadioChangeEvent, Row } from 'antd';
 import {
     PieChartOutlined,
     TableOutlined,
@@ -70,7 +70,7 @@ function App() {
         navigate('/')
     }
 
-    const onChartTypeChangeHandler = (e) => {
+    const onChartTypeChangeHandler = (e: RadioChangeEvent) => {
         setChartType(e.target.value)
     }
 
