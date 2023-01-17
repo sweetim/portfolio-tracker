@@ -10,7 +10,6 @@ import { Home, App } from './pages'
 import 'antd/dist/reset.css';
 
 import { ConfigProvider, theme } from 'antd';
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 const router = createBrowserRouter([
@@ -34,7 +33,6 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
             }}>
             <QueryClientProvider client={queryClient}>
                 <RouterProvider router={router} />
-                <ReactQueryDevtools initialIsOpen={false} />
             </QueryClientProvider>
         </ConfigProvider >
     </React.StrictMode>,
