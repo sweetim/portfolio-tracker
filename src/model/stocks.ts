@@ -144,7 +144,7 @@ if (import.meta.vitest) {
                 }
             }
         }
-    ])('convertToSymbolObjects $input', ({ input, expected }) => {
+    ])("convertToSymbolObjects $input", ({ input, expected }) => {
         expect(convertToSymbolObjects<StockProfile | StockQuote>(input))
             .toStrictEqual(expected)
     })
@@ -157,7 +157,8 @@ export function iterateUserStockHolding(
         accountType: string,
         currency: StockCurrency,
         userStockData: UserStockData
-    }) => void) {
+    }) => void)
+{
     Object.entries(input).forEach(([symbol, { accounts }]) => {
         Object.entries(accounts).forEach(([accountType, currencies]) => {
             Object.entries(currencies).forEach(([currency, userStockData]) => {
@@ -462,7 +463,7 @@ if (import.meta.vitest) {
 
         test("summary field should not be changed from multiple call", () => {
             const input = structuredClone(rawInput)
-            
+
             updateUserStockHoldingFrom(input, profiles, quotes)
             expect(input).toStrictEqual(expected)
 

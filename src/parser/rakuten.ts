@@ -127,7 +127,6 @@ NISA	15	38.46	109.59	1643.85	228,946	92.28 %	152,727.5`
     })
 }
 
-
 function parseCompositionRatioToken(token: string): number {
     return Number(token.split('%')[0].trim())
 }
@@ -136,118 +135,12 @@ if (import.meta.vitest) {
     const { test, expect } = import.meta.vitest
 
     test.each([
-        ['1.78 %', 1.78],
-        [' 5.94 %', 5.94],
-        [' 12.96  %', 12.96],
-    ])('able to parse composition ratio token ( %f ) -> %f', (input, expected) => {
-        expect(parseCompositionRatioToken(input)).toBe(expected)
+        [ '1.78 %', 1.78 ],
+        [ ' 5.94 %', 5.94 ],
+        [ ' 12.96  %', 12.96 ],
+        [ '', 0 ],
+        [ '%', 0],
+    ])('able to parse composition ratio token ( %s ) -> %d', (input, expected) => {
+        expect(parseCompositionRatioToken(input)).toStrictEqual(expected)
     })
 }
-
-// function computeTotalAccounts(input: UserStockHolding): UserStockHolding {
-//     Object.entries(input).forEach(([ symbol, {accounts} ]) => {
-//         Object.entries(accounts).forEach(([ accountType, currencies ]) => {
-//             Object.entries(currencies).forEach(([ currency, userStockData]) => {
-//                 input[symbol].accounts.total ??= {}
-//                 input[symbol].accounts.total[currency] ??= {
-//                     numberOfShares: 0,
-//                     averageAcquiredPrice: 0
-//                 }
-
-//                 const totalNumberOfShares = input[symbol].accounts.total[currency].numberOfShares
-//                 if (totalNumberOfShares > 0) {
-//                     const totalAverageAcquiredPrice = input[symbol].accounts.total[currency].averageAcquiredPrice
-//                     const userStockValue = userStockData.averageAcquiredPrice * userStockData.numberOfShares
-//                     const totalStockValue = totalNumberOfShares * totalAverageAcquiredPrice
-
-//                     input[symbol].accounts.total[currency].averageAcquiredPrice = (userStockValue + totalStockValue)
-//                         / (userStockData.numberOfShares + totalNumberOfShares)
-//                 } else {
-//                     input[symbol].accounts.total[currency].averageAcquiredPrice = userStockData.averageAcquiredPrice
-//                 }
-
-//                 input[symbol].accounts.total[currency].numberOfShares += userStockData.numberOfShares
-//             })
-//         })
-//     })
-
-//     return input
-// }
-
-// if (import.meta.vitest) {
-//     const { it, expect } = import.meta.vitest
-
-//     it("able to compute total accounts", () => {
-//         const input = {
-//             "AMZN": {
-//                 accounts: {
-//                     "特定": {
-//                         usd: {
-//                             numberOfShares: 6,
-//                             averageAcquiredPrice: 91.06
-//                         }
-//                     },
-//                     "NISA": {
-//                         usd: {
-//                             numberOfShares: 20,
-//                             averageAcquiredPrice: 105.18
-//                         }
-//                     }
-//                 }
-//             },
-//             "TSLA": {
-//                 accounts: {
-//                     "NISA": {
-//                         usd: {
-//                             numberOfShares: 15,
-//                             averageAcquiredPrice: 38.46
-//                         }
-//                     }
-//                 }
-//             }
-//         }
-
-//         const expected = {
-//             "AMZN": {
-//                 accounts: {
-//                     "特定": {
-//                         usd: {
-//                             numberOfShares: 6,
-//                             averageAcquiredPrice: 91.06
-//                         }
-//                     },
-//                     "NISA": {
-//                         usd: {
-//                             numberOfShares: 20,
-//                             averageAcquiredPrice: 105.18
-//                         }
-//                     },
-//                     total: {
-//                         usd: {
-//                             numberOfShares: 26,
-//                             averageAcquiredPrice: 101.92153846153847
-//                         }
-//                     }
-//                 }
-//             },
-//             "TSLA": {
-//                 accounts: {
-//                     "NISA": {
-//                         usd: {
-//                             numberOfShares: 15,
-//                             averageAcquiredPrice: 38.46
-//                         }
-//                     },
-//                     total: {
-//                         usd: {
-//                             numberOfShares: 15,
-//                             averageAcquiredPrice: 38.46
-//                         }
-//                     }
-//                 }
-//             }
-//         }
-
-//         expect(computeTotalAccounts(input)).toStrictEqual(expected)
-//     })
-// }

@@ -19,11 +19,11 @@ function Home() {
     const navigate = useNavigate()
 
     const submitButtonHandler = () => {
-        const userStockRecord = parseRakutenData(rawData)
-        setNumberOfCompanies(Object.keys(userStockRecord).length)
+        const userStockHolding = parseRakutenData(rawData)
+        setNumberOfCompanies(Object.keys(userStockHolding).length)
 
         navigate('/app', {
-            state: userStockRecord
+            state: userStockHolding
         })
     }
 
