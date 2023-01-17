@@ -185,30 +185,9 @@ export function updateUserStockHoldingFrom(
     profiles: StockProfileSymbols,
     quotes: StockQuotesSymbols)
 {
-    iterateUserStockHolding(input, ({
-        currency,
-        accountType,
-        symbol,
-        userStockData
-    }) => {
+    Object.keys(input).forEach((symbol) => {
         input[symbol].profile = profiles[symbol]
-
-        input[symbol].accounts[accountType] = {
-            [currency]: {
-                ...userStockData,
-                currentPrice: quotes[symbol].currentPrice,
-                change: quotes[symbol].change,
-                change_percentage: quotes[symbol].change_percentage,
-                openPrice: quotes[symbol].openPrice,
-                timestamp: quotes[symbol].timestamp,
-                marketValue: quotes[symbol].currentPrice * userStockData.numberOfShares,
-                compositionRatio: 0,
-                profit_percentage: (quotes[symbol].currentPrice - userStockData.averageAcquiredPrice) / userStockData.averageAcquiredPrice * 100,
-                profit: (quotes[symbol].currentPrice - userStockData.averageAcquiredPrice) * userStockData.numberOfShares,
-            }
-        }
-
-        input[symbol].summary ??= {
+        input[symbol].summary = {
             usd: {
                 numberOfShares: 0,
                 averageAcquiredPrice: 0,
@@ -221,6 +200,28 @@ export function updateUserStockHoldingFrom(
                 compositionRatio: 0,
                 profit_percentage: 0,
                 profit: 0,
+            }
+        }
+    })
+
+    iterateUserStockHolding(input, ({
+        currency,
+        accountType,
+        symbol,
+        userStockData
+    }) => {
+        input[symbol].accounts[accountType] = {
+            [currency]: {
+                ...userStockData,
+                currentPrice: quotes[symbol].currentPrice,
+                change: quotes[symbol].change,
+                change_percentage: quotes[symbol].change_percentage,
+                openPrice: quotes[symbol].openPrice,
+                timestamp: quotes[symbol].timestamp,
+                marketValue: quotes[symbol].currentPrice * userStockData.numberOfShares,
+                compositionRatio: 0,
+                profit_percentage: (quotes[symbol].currentPrice - userStockData.averageAcquiredPrice) / userStockData.averageAcquiredPrice * 100,
+                profit: (quotes[symbol].currentPrice - userStockData.averageAcquiredPrice) * userStockData.numberOfShares,
             }
         }
 
@@ -250,9 +251,9 @@ export function updateUserStockHoldingFrom(
 }
 
 if (import.meta.vitest) {
-    const { it, expect } = import.meta.vitest
+    const { describe, test, expect, beforeEach } = import.meta.vitest
 
-    it('should able update data from profiles and quotes', () => {
+    describe("userUpdateStockHoldingFrom", () => {
         const profiles: StockProfileSymbols = {
             AMZN: {
                 country: "country",
@@ -292,62 +293,6 @@ if (import.meta.vitest) {
                 low: 200,
                 openPrice: 200,
                 previousClose: 200,
-            }
-        }
-
-        const input = {
-            "AMZN": {
-                accounts: {
-                    "特定": {
-                        usd: {
-                            numberOfShares: 6,
-                            averageAcquiredPrice: 91.06,
-                            currentPrice: 86.08,
-                            change: 0,
-                            change_percentage: 0,
-                            openPrice: 0,
-                            timestamp: 0,
-                            marketValue: 516.48,
-                            compositionRatio: 1.78,
-                            profit_percentage: 0,
-                            profit: -29.880000000000024,
-                        }
-                    },
-                    "NISA": {
-                        usd: {
-                            numberOfShares: 20,
-                            averageAcquiredPrice: 105.18,
-                            currentPrice: 86.08,
-                            change: 0,
-                            change_percentage: 0,
-                            openPrice: 0,
-                            timestamp: 0,
-                            marketValue: 1721.6,
-                            compositionRatio: 5.94,
-                            profit_percentage: 0,
-                            profit: -382.00000000000017,
-                        }
-                    },
-                }
-            },
-            "TSLA": {
-                accounts: {
-                    "NISA": {
-                        usd: {
-                            numberOfShares: 15,
-                            averageAcquiredPrice: 38.46,
-                            currentPrice: 109.59,
-                            change: 0,
-                            change_percentage: 0,
-                            openPrice: 0,
-                            timestamp: 0,
-                            marketValue: 1643.85,
-                            compositionRatio: 92.28,
-                            profit_percentage: 0,
-                            profit: 1066.9499999999998,
-                        }
-                    },
-                }
             }
         }
 
@@ -451,11 +396,82 @@ if (import.meta.vitest) {
             }
         }
 
-        updateUserStockHoldingFrom(input, profiles, quotes)
-        expect(input).toStrictEqual(expected)
+        const rawInput = {
+            "AMZN": {
+                accounts: {
+                    "特定": {
+                        usd: {
+                            numberOfShares: 6,
+                            averageAcquiredPrice: 91.06,
+                            currentPrice: 86.08,
+                            change: 0,
+                            change_percentage: 0,
+                            openPrice: 0,
+                            timestamp: 0,
+                            marketValue: 516.48,
+                            compositionRatio: 1.78,
+                            profit_percentage: 0,
+                            profit: -29.880000000000024,
+                        }
+                    },
+                    "NISA": {
+                        usd: {
+                            numberOfShares: 20,
+                            averageAcquiredPrice: 105.18,
+                            currentPrice: 86.08,
+                            change: 0,
+                            change_percentage: 0,
+                            openPrice: 0,
+                            timestamp: 0,
+                            marketValue: 1721.6,
+                            compositionRatio: 5.94,
+                            profit_percentage: 0,
+                            profit: -382.00000000000017,
+                        }
+                    },
+                }
+            },
+            "TSLA": {
+                accounts: {
+                    "NISA": {
+                        usd: {
+                            numberOfShares: 15,
+                            averageAcquiredPrice: 38.46,
+                            currentPrice: 109.59,
+                            change: 0,
+                            change_percentage: 0,
+                            openPrice: 0,
+                            timestamp: 0,
+                            marketValue: 1643.85,
+                            compositionRatio: 92.28,
+                            profit_percentage: 0,
+                            profit: 1066.9499999999998,
+                        }
+                    },
+                }
+            }
+        }
 
-        updateUserStockHoldingFrom(input, profiles, quotes)
-        expect(input).toStrictEqual(expected)
+        test("is able to update data from profiles and quotes", () => {
+            const input = structuredClone(rawInput)
+
+            updateUserStockHoldingFrom(input, profiles, quotes)
+            expect(input).toStrictEqual(expected)
+            expect(input).not.toStrictEqual(rawInput)
+        })
+
+        test("summary field should not be changed from multiple call", () => {
+            const input = structuredClone(rawInput)
+            
+            updateUserStockHoldingFrom(input, profiles, quotes)
+            expect(input).toStrictEqual(expected)
+
+            updateUserStockHoldingFrom(input, profiles, quotes)
+            expect(input).toStrictEqual(expected)
+
+            updateUserStockHoldingFrom(input, profiles, quotes)
+            expect(input).toStrictEqual(expected)
+        })
     })
 }
 
@@ -484,9 +500,9 @@ export function updateUserStockHoldingCompositionRatio(input: UserStockHolding) 
 }
 
 if (import.meta.vitest) {
-    const { it, expect } = import.meta.vitest
+    const { test, expect } = import.meta.vitest
 
-    it("should update the composition ratio", () => {
+    test("should update the composition ratio", () => {
         const input = {
             "AMZN": {
                 profile: {
