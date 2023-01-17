@@ -6,54 +6,65 @@ import {
     SettingOutlined
 } from '@ant-design/icons';
 
-import { useState } from "react"
+import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom'
 
-import { StockTable, StockPieChart, StockTreeMap } from '../components';
-import { useEffect } from 'react';
+import { StockTable, StockPieChart, StockTreeMap, Loading } from '../components';
+
+import { usePopulateUserStockHolding } from '@/hooks';
+import { StockCurrency, UserStockHolding } from '@/model/stocks';
+import { convertUserStockHoldingToVisualizationItem, VisualizationItem } from '@/components/charts/util';
+import { ChartType } from '@/components/charts';
+
 
 function App() {
+    const { Content, Header } = Layout
+
     const location = useLocation()
     const navigate = useNavigate()
 
-    const { state: data } = location
+    const input = location.state as UserStockHolding
 
     useEffect(() => {
-        if (!data) navigate('/')
-    }, [data])
+        if (!input) navigate('/')
+    }, [input])
 
-    if (!data) {
+    if (!input) {
         return
     }
 
-    const flattenToTotalData = Object.entries(data)
-        .map(([k, v]) => {
-            const { account, ...others } = v as any
+    const [ chartType, setChartType ] = useState<ChartType>("StockTable")
+    const [ currency, SetCurrency ] = useState<StockCurrency>("usd")
 
-            return {
-                key: k,
-                ...others,
-                ...account.total
-            }
-        })
-
-    const { Content, Header } = Layout
-
-    const [chartType, setChartType] = useState("StockTreeMap")
+    const { isLoading, isError, data } = usePopulateUserStockHolding(input)
 
     const onChartTypeChangeHandler = (e) => {
         setChartType(e.target.value)
     }
 
-    const renderChart = () => {
-        const CHART_TYPES = {
-            "StockTable": <StockTable input={data} />,
-            "StockPieChart": <StockPieChart input={flattenToTotalData} />,
-            "StockTreeMap": <StockTreeMap input={flattenToTotalData} />
+    const [ visualizationItems, setVisualizationItems ] = useState<VisualizationItem[]>([])
+
+    useMemo(() => {
+        if (!isLoading) {
+            setVisualizationItems(convertUserStockHoldingToVisualizationItem(data))
         }
 
+    }, [isLoading, data])
+
+    const renderChart = useMemo(() => {
+        if (isLoading) {
+            return <Loading />
+        }
+
+        const CHART_TYPES = {
+            "StockTable": <StockTable input={visualizationItems} currency={currency} />,
+            // "StockPieChart": <StockPieChart input={flattenToTotalData} />,
+            // "StockTreeMap": <StockTreeMap input={flattenToTotalData} />
+        }
+
+        console.log(visualizationItems)
         return CHART_TYPES[chartType]
-    }
+    }, [isLoading, isError, visualizationItems])
 
     const settingButtonClickHandler = () => {
         navigate('/')
@@ -78,13 +89,9 @@ function App() {
                             icon={<SettingOutlined />} />
                     </Col>
                 </Row>
-
-
             </Header>
-
-            <Col flex="auto"></Col>
             <Content>
-                {renderChart()}
+                {renderChart}
             </Content>
         </Layout>
     );

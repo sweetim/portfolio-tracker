@@ -18,7 +18,9 @@ function usePopulateUserStockHolding(input: UserStockHolding) {
         queries: Object.keys(input).map(symbol => {
             return {
                 queryKey: ["quote", symbol],
-                queryFn: () => getStockQuote(symbol)
+                queryFn: () => getStockQuote(symbol),
+                retryDelay: 1000,
+                staleTime: 60 * 1000
             }
         })
     })
