@@ -1,23 +1,15 @@
 import { Pie } from '@ant-design/plots';
+import { FC } from 'react';
+import { VisualizationItemsProps } from '.';
 
-function StockPieChart({ input }) {
-    const data = input.map(({ symbol, compositionRatio }) => ({
-        type: symbol,
-        value: compositionRatio
-    })).sort((a, b) => b.value - a.value)
-
+const StockPieChart: FC<VisualizationItemsProps> = ({ input }) => {
     const config = {
         appendPadding: 10,
-        data,
+        data: input.sort((a, b) => b.compositionRatio - a.compositionRatio),
         animation: false,
-        angleField: 'value',
-        colorField: 'type',
+        angleField: 'compositionRatio',
+        colorField: 'symbol',
         radius: 0.75,
-        // label: {
-        //   type: 'spider',
-        //   labelHeight: 28,
-        //   content: '{name} {percentage}',
-        // },
         legend: {
             layout: 'horizontal',
             position: 'bottom',
@@ -26,7 +18,7 @@ function StockPieChart({ input }) {
         label: {
             type: 'inner',
             offset: '-30%',
-            content: ({ type, value }) => (value) > 1 ? `${type} ${value.toFixed(2)}%` : '',
+            content: ({ symbol, compositionRatio }) => (compositionRatio) > 1 ? `${symbol} ${compositionRatio.toFixed(2)}%` : '',
             style: {
                 fontSize: 14,
                 textAlign: 'center',
