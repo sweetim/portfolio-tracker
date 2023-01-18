@@ -210,6 +210,55 @@ if (import.meta.vitest) {
     })
 }
 
+function getAverageAcquiredPrice(
+    numberOfShares_current: number | undefined,
+    averageAcquiredPrice_current: number | undefined,
+    numberOfShares_new: number,
+    averageAcquiredPrice_new: number): number
+{
+    if (!averageAcquiredPrice_current || !numberOfShares_current) {
+        return averageAcquiredPrice_new
+    }
+
+    if (numberOfShares_current === 0) {
+        return averageAcquiredPrice_new
+    }
+
+    const userStockValue = averageAcquiredPrice_new * numberOfShares_new
+    const totalStockValue = numberOfShares_current * averageAcquiredPrice_current
+
+    return (userStockValue + totalStockValue)
+        / (numberOfShares_new + numberOfShares_current)
+}
+
+if (import.meta.vitest) {
+    const { describe, test, expect } = import.meta.vitest
+
+    describe("getAverageAcquiredPrice", () => {
+        test.each([
+            [ undefined, undefined ],
+            [ 100, undefined ],
+            [ undefined, 100 ]
+        ])("it can handle undefined input (%d) (%d)", (numberOfShares_current, averageAcquiredPrice_current) => {
+            expect(
+                getAverageAcquiredPrice(
+                    numberOfShares_current,
+                    averageAcquiredPrice_current,
+                    100,
+                    200)).toBe(200)
+        })
+
+        test("can compute correctly", () => {
+            expect(
+                getAverageAcquiredPrice(
+                    500,
+                     500,
+                    100,
+                    200)).toBe(450)
+        })
+    })
+}
+
 export function updateUserStockHoldingFrom(
     input: UserStockHolding,
     profiles: StockSymbolKeyFor<StockProfile | undefined>,
@@ -264,17 +313,12 @@ export function updateUserStockHoldingFrom(
             }
         }
 
-        const totalNumberOfShares = input[symbol]?.summary?.[currency]?.numberOfShares || 0
-        if (totalNumberOfShares > 0) {
-            const totalAverageAcquiredPrice = input[symbol]?.summary?.[currency]?.averageAcquiredPrice || 0
-            const userStockValue = userStockData.averageAcquiredPrice * userStockData.numberOfShares
-            const totalStockValue = totalNumberOfShares * totalAverageAcquiredPrice
-
-            input[symbol].summary![currency]!.averageAcquiredPrice = (userStockValue + totalStockValue)
-                / (userStockData.numberOfShares + totalNumberOfShares)
-        } else {
-            input[symbol].summary![currency]!.averageAcquiredPrice = userStockData.averageAcquiredPrice
-        }
+        input[symbol].summary![currency]!.averageAcquiredPrice = getAverageAcquiredPrice(
+            input[symbol]?.summary?.[currency]?.numberOfShares,
+            input[symbol]?.summary?.[currency]?.averageAcquiredPrice,
+            userStockData.numberOfShares,
+            userStockData.averageAcquiredPrice
+        )
 
         input[symbol].summary![currency]!.numberOfShares += userStockData.numberOfShares
         input[symbol].summary![currency]!.currentPrice = quotes[symbol]!.currentPrice
