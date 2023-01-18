@@ -205,7 +205,10 @@ if (import.meta.vitest) {
                 profit_percentage: 900
             }
 
-            expect(calculateStockValue(100, 10, 5)).toStrictEqual(expected)
+            expect(calculateStockValue(
+                100,
+                10,
+                5)).toStrictEqual(expected)
         })
     })
 }
