@@ -15,6 +15,10 @@ export interface UserStockData {
 export type StockCurrency = 'usd'
     | 'jpy'
 
+export type StockSymbolKeyFor<T> = {
+    [symbol: string]: T
+}
+
 export interface UserStockHolding {
     [symbol: string]: {
         profile?: StockProfile,
@@ -157,8 +161,7 @@ export function iterateUserStockHolding(
         accountType: string,
         currency: StockCurrency,
         userStockData: UserStockData
-    }) => void)
-{
+    }) => void) {
     Object.entries(input).forEach(([symbol, { accounts }]) => {
         Object.entries(accounts).forEach(([accountType, currencies]) => {
             Object.entries(currencies).forEach(([currency, userStockData]) => {
@@ -173,19 +176,42 @@ export function iterateUserStockHolding(
     })
 }
 
-export interface StockProfileSymbols {
-    [symbol: string]: StockProfile
+function calculateStockValue(
+    currentPrice: number,
+    averageAcquiredPrice: number,
+    numberOfShares: number): { profit: number, profit_percentage: number, marketValue: number }
+{
+    const profit = (currentPrice - averageAcquiredPrice) * numberOfShares
+    const profit_percentage = (currentPrice - averageAcquiredPrice) / averageAcquiredPrice * 100
+    const marketValue = currentPrice * numberOfShares
+
+    return {
+        profit,
+        profit_percentage,
+        marketValue
+    }
 }
 
-export interface StockQuotesSymbols {
-    [symbol: string]: StockQuote
+if (import.meta.vitest) {
+    const { describe, test, expect } = import.meta.vitest
+
+    describe("calculateStockValue", () => {
+        test("able to calculate correctly", () => {
+            const expected: ReturnType<typeof calculateStockValue> = {
+                profit: 450,
+                marketValue: 500,
+                profit_percentage: 900
+            }
+
+            expect(calculateStockValue(100, 10, 5)).toStrictEqual(expected)
+        })
+    })
 }
 
 export function updateUserStockHoldingFrom(
     input: UserStockHolding,
-    profiles: StockProfileSymbols,
-    quotes: StockQuotesSymbols)
-{
+    profiles: StockSymbolKeyFor<StockProfile>,
+    quotes: StockSymbolKeyFor<StockQuote>) {
     Object.keys(input).forEach((symbol) => {
         input[symbol].profile = profiles[symbol]
         input[symbol].summary = {
@@ -219,12 +245,12 @@ export function updateUserStockHoldingFrom(
                 change_percentage: quotes[symbol].change_percentage,
                 openPrice: quotes[symbol].openPrice,
                 timestamp: quotes[symbol].timestamp,
-                marketValue: quotes[symbol].currentPrice * userStockData.numberOfShares,
                 compositionRatio: 0,
-                profit_percentage: (quotes[symbol].currentPrice - userStockData.averageAcquiredPrice)
-                    / userStockData.averageAcquiredPrice * 100,
-                profit: (quotes[symbol].currentPrice - userStockData.averageAcquiredPrice)
-                    * userStockData.numberOfShares,
+                ...calculateStockValue(
+                    quotes[symbol].currentPrice,
+                    userStockData.averageAcquiredPrice,
+                    userStockData.numberOfShares
+                )
             }
         }
 
@@ -234,37 +260,40 @@ export function updateUserStockHoldingFrom(
             const userStockValue = userStockData.averageAcquiredPrice * userStockData.numberOfShares
             const totalStockValue = totalNumberOfShares * totalAverageAcquiredPrice
 
-            input[symbol].summary[currency].averageAcquiredPrice = (userStockValue + totalStockValue)
+            input[symbol].summary![currency]!.averageAcquiredPrice = (userStockValue + totalStockValue)
                 / (userStockData.numberOfShares + totalNumberOfShares)
         } else {
-            input[symbol].summary[currency].averageAcquiredPrice = userStockData.averageAcquiredPrice
+            input[symbol].summary![currency]!.averageAcquiredPrice = userStockData.averageAcquiredPrice
         }
 
-        input[symbol].summary[currency].numberOfShares += userStockData.numberOfShares
-        input[symbol].summary[currency].currentPrice = quotes[symbol].currentPrice
-        input[symbol].summary[currency].change = quotes[symbol].change
-        input[symbol].summary[currency].change_percentage = quotes[symbol].change_percentage
-        input[symbol].summary[currency].openPrice = quotes[symbol].openPrice
-        input[symbol].summary[currency].timestamp = quotes[symbol].timestamp
-        input[symbol].summary[currency].marketValue =
-            quotes[symbol].currentPrice * input[symbol].summary[currency].numberOfShares
+        input[symbol].summary![currency]!.numberOfShares += userStockData.numberOfShares
+        input[symbol].summary![currency]!.currentPrice = quotes[symbol].currentPrice
+        input[symbol].summary![currency]!.change = quotes[symbol].change
+        input[symbol].summary![currency]!.change_percentage = quotes[symbol].change_percentage
+        input[symbol].summary![currency]!.openPrice = quotes[symbol].openPrice
+        input[symbol].summary![currency]!.timestamp = quotes[symbol].timestamp
+        input[symbol].summary![currency]!.compositionRatio = 0
 
-        input[symbol].summary[currency].compositionRatio = 0
-        input[symbol].summary[currency].profit_percentage =
-            (quotes[symbol].currentPrice - input[symbol].summary[currency].averageAcquiredPrice)
-            / input[symbol].summary[currency].averageAcquiredPrice * 100
+        const {
+            marketValue,
+            profit,
+            profit_percentage
+        } = calculateStockValue(
+            quotes[symbol].currentPrice,
+            input[symbol].summary![currency]!.averageAcquiredPrice,
+            input[symbol].summary![currency]!.numberOfShares)
 
-        input[symbol].summary[currency].profit =
-            (quotes[symbol].currentPrice - input[symbol].summary[currency].averageAcquiredPrice)
-            * input[symbol].summary[currency].numberOfShares
+        input[symbol].summary![currency]!.marketValue = marketValue
+        input[symbol].summary![currency]!.profit_percentage = profit_percentage
+        input[symbol].summary![currency]!.profit = profit
     })
 }
 
 if (import.meta.vitest) {
-    const { describe, test, expect, beforeEach } = import.meta.vitest
+    const { describe, test, expect } = import.meta.vitest
 
     describe("userUpdateStockHoldingFrom", () => {
-        const profiles: StockProfileSymbols = {
+        const profiles: StockSymbolKeyFor<StockProfile> = {
             AMZN: {
                 country: "country",
                 industry: "industry",
@@ -281,7 +310,7 @@ if (import.meta.vitest) {
             }
         }
 
-        const quotes: StockQuotesSymbols = {
+        const quotes: StockSymbolKeyFor<StockQuote> = {
             AMZN: {
                 symbol: "AMZN",
                 timestamp: 100,
@@ -478,6 +507,50 @@ if (import.meta.vitest) {
 
             updateUserStockHoldingFrom(input, profiles, quotes)
             expect(input).toStrictEqual(expected)
+
+            updateUserStockHoldingFrom(input, profiles, quotes)
+            expect(input).toStrictEqual(expected)
+        })
+
+        test("able to handle empty currency field", () => {
+            const input = {
+                "AMZN": {
+                    accounts: {
+                        "特定": {
+                        },
+                    }
+                },
+            }
+
+            const expected = {
+                AMZN: {
+                    accounts: {
+                        "特定": {}
+                    },
+                    profile: {
+                        country: "country",
+                        industry: "industry",
+                        logoUrl: "logoUrl",
+                        name: "AMZN",
+                        symbol: "AMZN"
+                    },
+                    summary: {
+                        usd: {
+                            numberOfShares: 0,
+                            averageAcquiredPrice: 0,
+                            currentPrice: 0,
+                            change: 0,
+                            change_percentage: 0,
+                            openPrice: 0,
+                            timestamp: 0,
+                            marketValue: 0,
+                            compositionRatio: 0,
+                            profit_percentage: 0,
+                            profit: 0
+                        }
+                    }
+                }
+            }
 
             updateUserStockHoldingFrom(input, profiles, quotes)
             expect(input).toStrictEqual(expected)
