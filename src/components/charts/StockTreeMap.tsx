@@ -1,7 +1,8 @@
-import { FC } from 'react';
-import { Treemap } from '@ant-design/plots';
+import { FC } from "react";
+import { Treemap } from "@ant-design/plots";
 
-import { VisualizationItemsProps } from '.';
+import { VisualizationItemsProps } from ".";
+import { TreemapConfig } from "@ant-design/plots/es/components/treemap";
 
 const StockTreeMap: FC<VisualizationItemsProps> = ({ input }) => {
     const children = input.map((item) => {
@@ -15,16 +16,16 @@ const StockTreeMap: FC<VisualizationItemsProps> = ({ input }) => {
     })
 
     const data = {
-        name: 'root',
+        name: "root",
         children
     }
 
-    const config = {
+    const config: TreemapConfig = {
         data,
         animation: false,
         legend: false,
-        color: ['#f23645', '#363a45', 'lime'],
-        colorField: 'profit_percentage',
+        color: ["#f23645", "#363a45", "lime"],
+        colorField: "profit_percentage",
         label: {
             content: ({ name, profit_percentage }) => {
                 return `${name} ${profit_percentage.toFixed(2)}`
@@ -34,7 +35,7 @@ const StockTreeMap: FC<VisualizationItemsProps> = ({ input }) => {
 
     // @ts-ignore
     return <Treemap
-        style={{ minHeight: '100%' }}
+        style={{ minHeight: "100%" }}
         {...config} />
 }
 

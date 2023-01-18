@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { ChangeEventHandler, useState } from 'react';
 
 import { Layout, Input, Button, Statistic, Typography, Avatar, Row, Col } from 'antd';
 import { CheckOutlined, RiseOutlined } from '@ant-design/icons';
@@ -27,7 +27,7 @@ function Home() {
         })
     }
 
-    const textAreaChangeHandler = (e) => {
+    const textAreaChangeHandler = (e: any) => {
         setRawData(e.target.value)
 
         try {
@@ -39,8 +39,8 @@ function Home() {
         }
     }
 
-    const renderWhenDataIsOk = (input) => {
-        if (!input) return
+    const renderWhenDataIsOk = (isDataOk: boolean) => {
+        if (!isDataOk) return
 
         return (
             <Row gutter={8} align="middle">

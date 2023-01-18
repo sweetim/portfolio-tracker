@@ -1,6 +1,6 @@
 import { useQueries } from "@tanstack/react-query";
 
-import { convertToSymbolObjects, updateUserStockHoldingCompositionRatio, updateUserStockHoldingFrom, UserStockHolding } from "@/model/stocks";
+import { convertToStockSymbolKey, StockProfile, StockQuote, updateUserStockHoldingCompositionRatio, updateUserStockHoldingFrom, UserStockHolding } from "@/model/stocks";
 import { getStockProfile, getStockQuote } from "@/api/finnhub";
 
 function usePopulateUserStockHolding(input: UserStockHolding) {
@@ -33,8 +33,11 @@ function usePopulateUserStockHolding(input: UserStockHolding) {
         || quotesQuery.some(r => r.isError)
 
     if (!isLoading) {
-        const profiles = convertToSymbolObjects(profilesQuery.map(({ data }) => data))
-        const quotes = convertToSymbolObjects(quotesQuery.map(({ data }) => data))
+        const profiles = convertToStockSymbolKey<StockProfile | undefined>(
+            profilesQuery.map(({ data }) => data))
+
+        const quotes = convertToStockSymbolKey<StockQuote | undefined>(
+            quotesQuery.map(({ data }) => data))
 
         updateUserStockHoldingFrom(input, profiles, quotes)
         updateUserStockHoldingCompositionRatio(input)

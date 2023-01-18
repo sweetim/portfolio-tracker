@@ -53,8 +53,10 @@ export interface StockProfile {
     name: string
 }
 
-export function convertToSymbolObjects<T extends { symbol: string }>(input: T[]): { [symbol: string]: T } {
+export function convertToStockSymbolKey<T extends { symbol: string } | undefined>(input: T[]): { [symbol: string]: T } {
     return input.reduce((acc, item) => {
+        if (!item) return acc
+
         const { symbol } = item
         return acc[symbol] = item, acc
     }, {} as { [symbol: string]: T })
@@ -148,8 +150,8 @@ if (import.meta.vitest) {
                 }
             }
         }
-    ])("convertToSymbolObjects $input", ({ input, expected }) => {
-        expect(convertToSymbolObjects<StockProfile | StockQuote>(input))
+    ])("convertToStockSymbolKey $input", ({ input, expected }) => {
+        expect(convertToStockSymbolKey<StockProfile | StockQuote>(input))
             .toStrictEqual(expected)
     })
 }
@@ -210,10 +212,14 @@ if (import.meta.vitest) {
 
 export function updateUserStockHoldingFrom(
     input: UserStockHolding,
-    profiles: StockSymbolKeyFor<StockProfile>,
-    quotes: StockSymbolKeyFor<StockQuote>) {
+    profiles: StockSymbolKeyFor<StockProfile | undefined>,
+    quotes: StockSymbolKeyFor<StockQuote | undefined>)
+{
     Object.keys(input).forEach((symbol) => {
-        input[symbol].profile = profiles[symbol]
+        if (profiles[symbol]) {
+            input[symbol].profile = profiles[symbol]
+        }
+
         input[symbol].summary = {
             usd: {
                 numberOfShares: 0,
@@ -237,17 +243,21 @@ export function updateUserStockHoldingFrom(
         symbol,
         userStockData
     }) => {
+        if (!quotes[symbol] || !profiles[symbol]) {
+            return
+        }
+
         input[symbol].accounts[accountType] = {
             [currency]: {
                 ...userStockData,
-                currentPrice: quotes[symbol].currentPrice,
-                change: quotes[symbol].change,
-                change_percentage: quotes[symbol].change_percentage,
-                openPrice: quotes[symbol].openPrice,
-                timestamp: quotes[symbol].timestamp,
+                currentPrice: quotes[symbol]!.currentPrice,
+                change: quotes[symbol]!.change,
+                change_percentage: quotes[symbol]!.change_percentage,
+                openPrice: quotes[symbol]!.openPrice,
+                timestamp: quotes[symbol]!.timestamp,
                 compositionRatio: 0,
                 ...calculateStockValue(
-                    quotes[symbol].currentPrice,
+                    quotes[symbol]!.currentPrice,
                     userStockData.averageAcquiredPrice,
                     userStockData.numberOfShares
                 )
@@ -267,11 +277,11 @@ export function updateUserStockHoldingFrom(
         }
 
         input[symbol].summary![currency]!.numberOfShares += userStockData.numberOfShares
-        input[symbol].summary![currency]!.currentPrice = quotes[symbol].currentPrice
-        input[symbol].summary![currency]!.change = quotes[symbol].change
-        input[symbol].summary![currency]!.change_percentage = quotes[symbol].change_percentage
-        input[symbol].summary![currency]!.openPrice = quotes[symbol].openPrice
-        input[symbol].summary![currency]!.timestamp = quotes[symbol].timestamp
+        input[symbol].summary![currency]!.currentPrice = quotes[symbol]!.currentPrice
+        input[symbol].summary![currency]!.change = quotes[symbol]!.change
+        input[symbol].summary![currency]!.change_percentage = quotes[symbol]!.change_percentage
+        input[symbol].summary![currency]!.openPrice = quotes[symbol]!.openPrice
+        input[symbol].summary![currency]!.timestamp = quotes[symbol]!.timestamp
         input[symbol].summary![currency]!.compositionRatio = 0
 
         const {
@@ -279,7 +289,7 @@ export function updateUserStockHoldingFrom(
             profit,
             profit_percentage
         } = calculateStockValue(
-            quotes[symbol].currentPrice,
+            quotes[symbol]!.currentPrice,
             input[symbol].summary![currency]!.averageAcquiredPrice,
             input[symbol].summary![currency]!.numberOfShares)
 
@@ -290,7 +300,7 @@ export function updateUserStockHoldingFrom(
 }
 
 if (import.meta.vitest) {
-    const { describe, test, expect } = import.meta.vitest
+    const { describe, test, expect, beforeEach } = import.meta.vitest
 
     describe("userUpdateStockHoldingFrom", () => {
         const profiles: StockSymbolKeyFor<StockProfile> = {
@@ -435,73 +445,71 @@ if (import.meta.vitest) {
             }
         }
 
-        const rawInput = {
-            "AMZN": {
-                accounts: {
-                    "特定": {
-                        usd: {
-                            numberOfShares: 6,
-                            averageAcquiredPrice: 91.06,
-                            currentPrice: 86.08,
-                            change: 0,
-                            change_percentage: 0,
-                            openPrice: 0,
-                            timestamp: 0,
-                            marketValue: 516.48,
-                            compositionRatio: 1.78,
-                            profit_percentage: 0,
-                            profit: -29.880000000000024,
-                        }
-                    },
-                    "NISA": {
-                        usd: {
-                            numberOfShares: 20,
-                            averageAcquiredPrice: 105.18,
-                            currentPrice: 86.08,
-                            change: 0,
-                            change_percentage: 0,
-                            openPrice: 0,
-                            timestamp: 0,
-                            marketValue: 1721.6,
-                            compositionRatio: 5.94,
-                            profit_percentage: 0,
-                            profit: -382.00000000000017,
-                        }
-                    },
-                }
-            },
-            "TSLA": {
-                accounts: {
-                    "NISA": {
-                        usd: {
-                            numberOfShares: 15,
-                            averageAcquiredPrice: 38.46,
-                            currentPrice: 109.59,
-                            change: 0,
-                            change_percentage: 0,
-                            openPrice: 0,
-                            timestamp: 0,
-                            marketValue: 1643.85,
-                            compositionRatio: 92.28,
-                            profit_percentage: 0,
-                            profit: 1066.9499999999998,
-                        }
-                    },
+        let input = {}
+        beforeEach(() => {
+            input = {
+                "AMZN": {
+                    accounts: {
+                        "特定": {
+                            usd: {
+                                numberOfShares: 6,
+                                averageAcquiredPrice: 91.06,
+                                currentPrice: 86.08,
+                                change: 0,
+                                change_percentage: 0,
+                                openPrice: 0,
+                                timestamp: 0,
+                                marketValue: 516.48,
+                                compositionRatio: 1.78,
+                                profit_percentage: 0,
+                                profit: -29.880000000000024,
+                            }
+                        },
+                        "NISA": {
+                            usd: {
+                                numberOfShares: 20,
+                                averageAcquiredPrice: 105.18,
+                                currentPrice: 86.08,
+                                change: 0,
+                                change_percentage: 0,
+                                openPrice: 0,
+                                timestamp: 0,
+                                marketValue: 1721.6,
+                                compositionRatio: 5.94,
+                                profit_percentage: 0,
+                                profit: -382.00000000000017,
+                            }
+                        },
+                    }
+                },
+                "TSLA": {
+                    accounts: {
+                        "NISA": {
+                            usd: {
+                                numberOfShares: 15,
+                                averageAcquiredPrice: 38.46,
+                                currentPrice: 109.59,
+                                change: 0,
+                                change_percentage: 0,
+                                openPrice: 0,
+                                timestamp: 0,
+                                marketValue: 1643.85,
+                                compositionRatio: 92.28,
+                                profit_percentage: 0,
+                                profit: 1066.9499999999998,
+                            }
+                        },
+                    }
                 }
             }
-        }
+        })
 
         test("is able to update data from profiles and quotes", () => {
-            const input = structuredClone(rawInput)
-
             updateUserStockHoldingFrom(input, profiles, quotes)
             expect(input).toStrictEqual(expected)
-            expect(input).not.toStrictEqual(rawInput)
         })
 
         test("summary field should not be changed from multiple call", () => {
-            const input = structuredClone(rawInput)
-
             updateUserStockHoldingFrom(input, profiles, quotes)
             expect(input).toStrictEqual(expected)
 
@@ -553,6 +561,293 @@ if (import.meta.vitest) {
             }
 
             updateUserStockHoldingFrom(input, profiles, quotes)
+            expect(input).toStrictEqual(expected)
+        })
+
+        test("able to handle undefined quotes", () => {
+            const expected = {
+                AMZN: {
+                    accounts: {
+                        特定: {
+                            usd: {
+                                numberOfShares: 6,
+                                averageAcquiredPrice: 91.06,
+                                currentPrice: 86.08,
+                                change: 0,
+                                change_percentage: 0,
+                                openPrice: 0,
+                                timestamp: 0,
+                                marketValue: 516.48,
+                                compositionRatio: 1.78,
+                                profit_percentage: 0,
+                                profit: -29.880000000000024
+                            }
+                        },
+                        NISA: {
+                            usd: {
+                                numberOfShares: 20,
+                                averageAcquiredPrice: 105.18,
+                                currentPrice: 86.08,
+                                change: 0,
+                                change_percentage: 0,
+                                openPrice: 0,
+                                timestamp: 0,
+                                marketValue: 1721.6,
+                                compositionRatio: 5.94,
+                                profit_percentage: 0,
+                                profit: -382.00000000000017
+                            }
+                        }
+                    },
+                    profile: {
+                        country: "country",
+                        industry: "industry",
+                        logoUrl: "logoUrl",
+                        name: "AMZN",
+                        symbol: "AMZN"
+                    },
+                    summary: {
+                        usd: {
+                            numberOfShares: 0,
+                            averageAcquiredPrice: 0,
+                            currentPrice: 0,
+                            change: 0,
+                            change_percentage: 0,
+                            openPrice: 0,
+                            timestamp: 0,
+                            marketValue: 0,
+                            compositionRatio: 0,
+                            profit_percentage: 0,
+                            profit: 0
+                        }
+                    }
+                },
+                TSLA: {
+                    accounts: {
+                        NISA: {
+                            usd: {
+                                numberOfShares: 15,
+                                averageAcquiredPrice: 38.46,
+                                currentPrice: 109.59,
+                                change: 0,
+                                change_percentage: 0,
+                                openPrice: 0,
+                                timestamp: 0,
+                                marketValue: 1643.85,
+                                compositionRatio: 92.28,
+                                profit_percentage: 0,
+                                profit: 1066.9499999999998
+                            }
+                        }
+                    },
+                    profile: {
+                        country: "country",
+                        industry: "industry",
+                        logoUrl: "logoUrl",
+                        name: "TSLA",
+                        symbol: "TSLA"
+                    },
+                    summary: {
+                        usd: {
+                            numberOfShares: 0,
+                            averageAcquiredPrice: 0,
+                            currentPrice: 0,
+                            change: 0,
+                            change_percentage: 0,
+                            openPrice: 0,
+                            timestamp: 0,
+                            marketValue: 0,
+                            compositionRatio: 0,
+                            profit_percentage: 0,
+                            profit: 0
+                        }
+                    }
+                }
+            }
+
+            updateUserStockHoldingFrom(input, profiles, {})
+            expect(input).toStrictEqual(expected)
+        })
+
+        test("able to handle undefined profiles", () => {
+            const expected = {
+                AMZN: {
+                    accounts: {
+                        特定: {
+                            usd: {
+                                numberOfShares: 6,
+                                averageAcquiredPrice: 91.06,
+                                currentPrice: 86.08,
+                                change: 0,
+                                change_percentage: 0,
+                                openPrice: 0,
+                                timestamp: 0,
+                                marketValue: 516.48,
+                                compositionRatio: 1.78,
+                                profit_percentage: 0,
+                                profit: -29.880000000000024
+                            }
+                        },
+                        NISA: {
+                            usd: {
+                                numberOfShares: 20,
+                                averageAcquiredPrice: 105.18,
+                                currentPrice: 86.08,
+                                change: 0,
+                                change_percentage: 0,
+                                openPrice: 0,
+                                timestamp: 0,
+                                marketValue: 1721.6,
+                                compositionRatio: 5.94,
+                                profit_percentage: 0,
+                                profit: -382.00000000000017
+                            }
+                        }
+                    },
+                    summary: {
+                        usd: {
+                            numberOfShares: 0,
+                            averageAcquiredPrice: 0,
+                            currentPrice: 0,
+                            change: 0,
+                            change_percentage: 0,
+                            openPrice: 0,
+                            timestamp: 0,
+                            marketValue: 0,
+                            compositionRatio: 0,
+                            profit_percentage: 0,
+                            profit: 0
+                        }
+                    }
+                },
+                TSLA: {
+                    accounts: {
+                        NISA: {
+                            usd: {
+                                numberOfShares: 15,
+                                averageAcquiredPrice: 38.46,
+                                currentPrice: 109.59,
+                                change: 0,
+                                change_percentage: 0,
+                                openPrice: 0,
+                                timestamp: 0,
+                                marketValue: 1643.85,
+                                compositionRatio: 92.28,
+                                profit_percentage: 0,
+                                profit: 1066.9499999999998
+                            }
+                        }
+                    },
+                    summary: {
+                        usd: {
+                            numberOfShares: 0,
+                            averageAcquiredPrice: 0,
+                            currentPrice: 0,
+                            change: 0,
+                            change_percentage: 0,
+                            openPrice: 0,
+                            timestamp: 0,
+                            marketValue: 0,
+                            compositionRatio: 0,
+                            profit_percentage: 0,
+                            profit: 0
+                        }
+                    }
+                }
+            }
+
+            updateUserStockHoldingFrom(input, {}, quotes)
+            expect(input).toStrictEqual(expected)
+        })
+
+        test("able to handle undefined profiles and quotes", () => {
+            const expected = {
+                AMZN: {
+                    accounts: {
+                        特定: {
+                            usd: {
+                                numberOfShares: 6,
+                                averageAcquiredPrice: 91.06,
+                                currentPrice: 86.08,
+                                change: 0,
+                                change_percentage: 0,
+                                openPrice: 0,
+                                timestamp: 0,
+                                marketValue: 516.48,
+                                compositionRatio: 1.78,
+                                profit_percentage: 0,
+                                profit: -29.880000000000024
+                            }
+                        },
+                        NISA: {
+                            usd: {
+                                numberOfShares: 20,
+                                averageAcquiredPrice: 105.18,
+                                currentPrice: 86.08,
+                                change: 0,
+                                change_percentage: 0,
+                                openPrice: 0,
+                                timestamp: 0,
+                                marketValue: 1721.6,
+                                compositionRatio: 5.94,
+                                profit_percentage: 0,
+                                profit: -382.00000000000017
+                            }
+                        }
+                    },
+                    summary: {
+                        usd: {
+                            numberOfShares: 0,
+                            averageAcquiredPrice: 0,
+                            currentPrice: 0,
+                            change: 0,
+                            change_percentage: 0,
+                            openPrice: 0,
+                            timestamp: 0,
+                            marketValue: 0,
+                            compositionRatio: 0,
+                            profit_percentage: 0,
+                            profit: 0
+                        }
+                    }
+                },
+                TSLA: {
+                    accounts: {
+                        NISA: {
+                            usd: {
+                                numberOfShares: 15,
+                                averageAcquiredPrice: 38.46,
+                                currentPrice: 109.59,
+                                change: 0,
+                                change_percentage: 0,
+                                openPrice: 0,
+                                timestamp: 0,
+                                marketValue: 1643.85,
+                                compositionRatio: 92.28,
+                                profit_percentage: 0,
+                                profit: 1066.9499999999998
+                            }
+                        }
+                    },
+                    summary: {
+                        usd: {
+                            numberOfShares: 0,
+                            averageAcquiredPrice: 0,
+                            currentPrice: 0,
+                            change: 0,
+                            change_percentage: 0,
+                            openPrice: 0,
+                            timestamp: 0,
+                            marketValue: 0,
+                            compositionRatio: 0,
+                            profit_percentage: 0,
+                            profit: 0
+                        }
+                    }
+                }
+            }
+
+            updateUserStockHoldingFrom(input, {}, {})
             expect(input).toStrictEqual(expected)
         })
     })

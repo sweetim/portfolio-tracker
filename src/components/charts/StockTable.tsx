@@ -5,6 +5,7 @@ import { ColumnsType } from 'antd/es/table/interface'
 import './StockTable.css'
 
 import { VisualizationItemsProps } from '.';
+import { VisualizationItem } from './util';
 
 const StockTable: FC<VisualizationItemsProps> = ({ input, currency }) => {
     const defaultNumberRenderer = (input: number) => input.toFixed(2)
@@ -15,7 +16,7 @@ const StockTable: FC<VisualizationItemsProps> = ({ input, currency }) => {
         }
     })
 
-    const columns: ColumnsType<VisualizationItemsProps> = [
+    const columns: ColumnsType<VisualizationItem> = [
         {
             title: '',
             dataIndex: 'symbol',
@@ -48,7 +49,6 @@ const StockTable: FC<VisualizationItemsProps> = ({ input, currency }) => {
             title: 'Units',
             dataIndex: 'numberOfShares',
             key: 'numberOfShares',
-            onCell: ({ numberOfShares }) => numberOfShares
         },
         {
             title: `Avg Open (${currency.toUpperCase()})`,

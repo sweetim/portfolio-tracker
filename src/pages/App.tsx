@@ -29,10 +29,6 @@ function App() {
         if (!input) navigate('/')
     }, [input])
 
-    if (!input) {
-        return
-    }
-
     const [ chartType, setChartType ] = useState<ChartType>("StockTable")
     const [ currency, setCurrency ] = useState<StockCurrency>("usd")
     const [ visualizationItems, setVisualizationItems ] = useState<VisualizationItem[]>([])
@@ -62,7 +58,6 @@ function App() {
             "StockTreeMap": <StockTreeMap {...visualizationConfig} />
         }
 
-        console.log(visualizationItems)
         return CHART_TYPES[chartType]
     }, [chartType, isLoading, isError, visualizationItems])
 

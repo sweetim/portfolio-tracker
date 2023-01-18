@@ -1,33 +1,33 @@
-import { Pie } from '@ant-design/plots';
-import { FC } from 'react';
-import { VisualizationItemsProps } from '.';
+import { Pie, PieConfig } from "@ant-design/plots";
+import { FC } from "react";
+import { VisualizationItemsProps } from ".";
 
 const StockPieChart: FC<VisualizationItemsProps> = ({ input }) => {
-    const config = {
+    const config: PieConfig = {
         appendPadding: 10,
         data: input.sort((a, b) => b.compositionRatio - a.compositionRatio),
         animation: false,
-        angleField: 'compositionRatio',
-        colorField: 'symbol',
+        angleField: "compositionRatio",
+        colorField: "symbol",
         radius: 0.75,
         legend: {
-            layout: 'horizontal',
-            position: 'bottom',
+            layout: "horizontal",
+            position: "bottom",
             flipPage: false,
         },
         label: {
-            type: 'inner',
-            offset: '-30%',
-            content: ({ symbol, compositionRatio }) => (compositionRatio) > 1 ? `${symbol} ${compositionRatio.toFixed(2)}%` : '',
+            type: "inner",
+            offset: "-30%",
+            content: ({ symbol, compositionRatio }) => (compositionRatio) > 1 ? `${symbol} ${compositionRatio.toFixed(2)}%` : "",
             style: {
                 fontSize: 14,
-                textAlign: 'center',
+                textAlign: "center",
             },
         },
         theme: "dark",
         interactions: [
             {
-                type: 'element-active',
+                type: "element-active",
             },
         ],
     }

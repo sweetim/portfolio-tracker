@@ -8,6 +8,7 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "test": "vitest --reporter verbose",
+    "typecheck": "vitest typecheck",
     "coverage": "vitest run --coverage"
   },
   "dependencies": {
