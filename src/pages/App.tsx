@@ -29,9 +29,9 @@ function App() {
         if (!input) navigate('/')
     }, [input])
 
-    const [ chartType, setChartType ] = useState<ChartType>("StockTable")
-    const [ currency, setCurrency ] = useState<StockCurrency>("usd")
-    const [ visualizationItems, setVisualizationItems ] = useState<VisualizationItem[]>([])
+    const [chartType, setChartType] = useState<ChartType>("StockTable")
+    const [currency, setCurrency] = useState<StockCurrency>("usd")
+    const [visualizationItems, setVisualizationItems] = useState<VisualizationItem[]>([])
 
     const { isLoading, isError, data } = usePopulateUserStockHolding(input)
 
@@ -52,7 +52,7 @@ function App() {
             currency
         }
 
-        const CHART_TYPES = {
+        const CHART_TYPES: { [t in ChartType]: JSX.Element } = {
             "StockTable": <StockTable {...visualizationConfig} />,
             "StockPieChart": <StockPieChart {...visualizationConfig} />,
             "StockTreeMap": <StockTreeMap {...visualizationConfig} />
