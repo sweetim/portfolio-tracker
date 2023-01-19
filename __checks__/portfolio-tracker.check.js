@@ -4,11 +4,7 @@
  * https://playwright.dev/docs/writing-tests
  */
 const { expect, test } = require('@playwright/test')
-
-
 const req = require('request-promise')
-
-
 
 test('visit page and take screenshot', async ({ page }) => {
   const vercelDeploymentPassword = process.env.PASSWORD_VERCEL
@@ -16,7 +12,7 @@ test('visit page and take screenshot', async ({ page }) => {
   // If available, we set the target URL to a preview deployment URL provided by the ENVIRONMENT_URL created by Vercel.
   // Otherwise, we use the Production URL.
   const targetUrl = process.env.ENVIRONMENT_URL || 'https://pt.timx.co'
-
+  console.log(process.env)
   const options = {
     uri: targetUrl,
     simple: false,
