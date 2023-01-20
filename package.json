@@ -1,7 +1,15 @@
 {
   "name": "portfolio-tracker",
-  "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "author": {
+    "name": "tim",
+    "email": "hosweetim@gmail.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sweetim/portfolio-tracker"
+  },
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "dev": "vite",
