@@ -1,4 +1,4 @@
-import { FC } from "react"
+import { FC, useMemo } from "react"
 import { Table, Avatar, Col, Row, Tooltip } from "antd"
 import { ColumnsType } from "antd/es/table/interface"
 
@@ -14,6 +14,9 @@ const StockTable: FC<VisualizationItemsProps> = ({ input, currency }) => {
             color: input_1 < input_2 ? "#f23645" : "lime",
             fontWeight: "bold"
         }
+    })
+    const defaultDataUpdateStyle = () => ({
+        className: "update-blinking"
     })
 
     const columns: ColumnsType<VisualizationItem> = [
@@ -65,7 +68,10 @@ const StockTable: FC<VisualizationItemsProps> = ({ input, currency }) => {
             dataIndex: "currentPrice",
             key: "currentPrice",
             render: defaultNumberRenderer,
-            onCell: (r) => defaultStyleForChange(r.currentPrice, r.averageAcquiredPrice)
+            onCell: (r) => ({
+                ...defaultStyleForChange(r.currentPrice, r.averageAcquiredPrice),
+                ...defaultDataUpdateStyle()
+            })
         },
         {
             title: "P/L (%)",
