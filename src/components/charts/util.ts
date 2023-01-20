@@ -20,7 +20,8 @@ export interface VisualizationItem {
 
 export function convertUserStockHoldingToVisualizationItem(
     input: UserStockHolding,
-    currency: StockCurrency = "usd"): VisualizationItem[] {
+    currency: StockCurrency = "usd"): VisualizationItem[]
+{
     return Object.entries(input)
         .map(([symbol, item]) => {
             const children = Object.entries(item.accounts)

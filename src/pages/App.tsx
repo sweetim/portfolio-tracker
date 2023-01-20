@@ -11,11 +11,11 @@ import { useLocation, useNavigate } from 'react-router-dom'
 
 import { StockTable, StockPieChart, StockTreeMap, Loading } from '../components';
 
-import { usePopulateUserStockHolding } from '@/hooks';
-import { StockCurrency, UserStockHolding } from '@/model/stocks';
+import { usePopulateUserStockHolding, useRealTimeStockQuotes } from '@/hooks';
+import { StockCurrency, updateUserStockHoldingWithLatestTrade, UserStockHolding } from '@/model/stocks';
 import { convertUserStockHoldingToVisualizationItem, VisualizationItem } from '@/components/charts/util';
 import { ChartType, VisualizationItemsProps } from '@/components/charts';
-
+import { ReadyState } from 'react-use-websocket';
 
 function App() {
     const { Content, Header } = Layout
@@ -34,13 +34,14 @@ function App() {
     const [visualizationItems, setVisualizationItems] = useState<VisualizationItem[]>([])
 
     const { isLoading, isError, data } = usePopulateUserStockHolding(input)
+    const { trades, readyState } = useRealTimeStockQuotes(Object.keys(input))
 
-    useMemo(() => {
-        if (!isLoading) {
-            setVisualizationItems(convertUserStockHoldingToVisualizationItem(data))
-        }
+    useEffect(() => {
+        if (isLoading || readyState !== ReadyState.OPEN) return
 
-    }, [isLoading, data])
+        updateUserStockHoldingWithLatestTrade(input, trades)
+        setVisualizationItems(convertUserStockHoldingToVisualizationItem(data))
+    }, [isLoading, data, readyState, trades])
 
     const renderChart = useMemo(() => {
         if (isLoading) {

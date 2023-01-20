@@ -1,3 +1,5 @@
+import { WSReceiveTrade } from "@/api/finnhub"
+
 export interface UserStockData {
     numberOfShares: number,
     averageAcquiredPrice: number,
@@ -1221,4 +1223,19 @@ if (import.meta.vitest) {
             expect(input).toStrictEqual(expected)
         })
     })
+}
+
+export function updateUserStockHoldingWithLatestTrade(
+    input: UserStockHolding,
+    latestTrades: StockSymbolKeyFor<WSReceiveTrade> | undefined)
+{
+    if (!latestTrades) return
+
+    Object.entries(latestTrades)
+        .forEach(([ symbol, trade ]) => {
+            if (input[symbol] && input[symbol].summary && input[symbol].summary?.usd) {
+                input[symbol]!.summary!.usd!.currentPrice = trade.price
+                input[symbol]!.summary!.usd!.timestamp = trade.timestamp_ms
+            }
+        })
 }
