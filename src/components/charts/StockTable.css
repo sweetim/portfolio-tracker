@@ -1,0 +1,25 @@
+.ant-table-row-expand-icon {
+    margin-top: 10px !important;
+}
+
+
+@keyframes blinking {
+    from {
+        background-color: lightgreen;
+    }
+
+    to {
+        background-color: inherit;
+    }
+}
+
+.update-blinking {
+    -webkit-animation: blinking 1s;
+    /* Safari 4+ */
+    -moz-animation: blinking 1s;
+    /* Fx 5+ */
+    -o-animation: blinking 1s;
+    /* Opera 12+ */
+    animation: blinking 1s;
+    /* IE 10+ */
+}

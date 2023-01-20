@@ -1,11 +1,11 @@
-import { useState } from 'react';
+import { ChangeEventHandler, useState } from 'react';
 
 import { Layout, Input, Button, Statistic, Typography, Avatar, Row, Col } from 'antd';
 import { CheckOutlined, RiseOutlined } from '@ant-design/icons';
 
 import { useNavigate } from 'react-router-dom';
 
-import { parseRakutenRawData } from '../parser/rakuten'
+import { parseRakutenData } from '@/parser/rakuten'
 
 function Home() {
     const { Content } = Layout
@@ -19,19 +19,19 @@ function Home() {
     const navigate = useNavigate()
 
     const submitButtonHandler = () => {
-        const data = parseRakutenRawData(rawData)
-        setNumberOfCompanies(Object.keys(data).length)
+        const userStockHolding = parseRakutenData(rawData)
+        setNumberOfCompanies(Object.keys(userStockHolding).length)
 
         navigate('/app', {
-            state: data
+            state: userStockHolding
         })
     }
 
-    const textAreaChangeHandler = (e) => {
+    const textAreaChangeHandler = (e: any) => {
         setRawData(e.target.value)
 
         try {
-            const data = parseRakutenRawData(e.target.value)
+            const data = parseRakutenData(e.target.value)
             setNumberOfCompanies(Object.keys(data).length)
             setIsDataOk(true)
         } catch (e) {
@@ -39,8 +39,8 @@ function Home() {
         }
     }
 
-    const renderWhenDataIsOk = (input) => {
-        if (!input) return
+    const renderWhenDataIsOk = (isDataOk: boolean) => {
+        if (!isDataOk) return
 
         return (
             <Row gutter={8} align="middle">

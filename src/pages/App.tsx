@@ -1,4 +1,4 @@
-import { Button, Col, Layout, Radio, Row } from 'antd';
+import { Button, Col, Layout, Radio, RadioChangeEvent, Row } from 'antd';
 import {
     PieChartOutlined,
     TableOutlined,
@@ -6,57 +6,68 @@ import {
     SettingOutlined
 } from '@ant-design/icons';
 
-import { useState } from "react"
+import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom'
 
-import { StockTable, StockPieChart, StockTreeMap } from '../components';
-import { useEffect } from 'react';
+import { StockTable, StockPieChart, StockTreeMap, Loading } from '../components';
+
+import { usePopulateUserStockHolding, useRealTimeStockQuotes } from '@/hooks';
+import { StockCurrency, updateUserStockHoldingWithLatestTrade, UserStockHolding } from '@/model/stocks';
+import { convertUserStockHoldingToVisualizationItem, VisualizationItem } from '@/components/charts/util';
+import { ChartType, VisualizationItemsProps } from '@/components/charts';
+import { ReadyState } from 'react-use-websocket';
 
 function App() {
+    const { Content, Header } = Layout
+
     const location = useLocation()
     const navigate = useNavigate()
 
-    const { state: data } = location
+    const input = location.state as UserStockHolding
 
     useEffect(() => {
-        if (!data) navigate('/')
-    }, [data])
+        if (!input) navigate('/')
+    }, [input])
 
-    if (!data) {
-        return
-    }
+    const [chartType, setChartType] = useState<ChartType>("StockTable")
+    const [currency, setCurrency] = useState<StockCurrency>("usd")
+    const [visualizationItems, setVisualizationItems] = useState<VisualizationItem[]>([])
 
-    const flattenToTotalData = Object.entries(data)
-        .map(([k, v]) => {
-            const { account, ...others } = v as any
+    const { isLoading, isError, data } = usePopulateUserStockHolding(input)
+    const { trades, readyState } = useRealTimeStockQuotes(Object.keys(input))
 
-            return {
-                key: k,
-                ...others,
-                ...account.total
-            }
-        })
+    useEffect(() => {
+        if (isLoading || readyState !== ReadyState.OPEN) return
 
-    const { Content, Header } = Layout
+        updateUserStockHoldingWithLatestTrade(input, trades)
+        setVisualizationItems(convertUserStockHoldingToVisualizationItem(data))
+    }, [isLoading, data, readyState, trades])
 
-    const [chartType, setChartType] = useState("StockTreeMap")
+    const renderChart = useMemo(() => {
+        if (isLoading) {
+            return <Loading />
+        }
 
-    const onChartTypeChangeHandler = (e) => {
-        setChartType(e.target.value)
-    }
+        const visualizationConfig: VisualizationItemsProps = {
+            input: visualizationItems,
+            currency
+        }
 
-    const renderChart = () => {
-        const CHART_TYPES = {
-            "StockTable": <StockTable input={data} />,
-            "StockPieChart": <StockPieChart input={flattenToTotalData} />,
-            "StockTreeMap": <StockTreeMap input={flattenToTotalData} />
+        const CHART_TYPES: { [t in ChartType]: JSX.Element } = {
+            "StockTable": <StockTable {...visualizationConfig} />,
+            "StockPieChart": <StockPieChart {...visualizationConfig} />,
+            "StockTreeMap": <StockTreeMap {...visualizationConfig} />
         }
 
         return CHART_TYPES[chartType]
-    }
+    }, [chartType, isLoading, isError, visualizationItems])
 
     const settingButtonClickHandler = () => {
         navigate('/')
+    }
+
+    const onChartTypeChangeHandler = (e: RadioChangeEvent) => {
+        setChartType(e.target.value)
     }
 
     return (
@@ -78,13 +89,9 @@ function App() {
                             icon={<SettingOutlined />} />
                     </Col>
                 </Row>
-
-
             </Header>
-
-            <Col flex="auto"></Col>
             <Content>
-                {renderChart()}
+                {renderChart}
             </Content>
         </Layout>
     );

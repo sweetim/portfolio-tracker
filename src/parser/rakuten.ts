@@ -1,29 +1,7 @@
-export interface RakutenRawData {
-    [symbol: string]: RakutenSymbolData
-}
+import { UserStockHolding } from "@/model/stocks"
 
-export interface RakutenSymbolData {
-    symbol: string
-    account: {
-        [type: string]: RakutenAccountData
-        total: RakutenAccountData
-    }
-}
-
-export interface RakutenAccountData {
-    numberOfShares: number
-    averageAcquiredPrice_usd: number
-    currentPrice_usd: number
-    marketValue_usd: number
-    marketValue_jpy: number
-    compositionRatio: number
-    profit_percentage: number
-    profit_jpy: number
-    profit_usd: number
-}
-
-export function parseRakutenRawData(rawInput: string): RakutenRawData {
-    const output = []
+export function parseRakutenData(rawInput: string): UserStockHolding {
+    const output = {} as UserStockHolding
 
     const input = rawInput.split('\n')
 
@@ -33,16 +11,9 @@ export function parseRakutenRawData(rawInput: string): RakutenRawData {
         const name = input[i + 1]
         const tokens = input[i + 2].split("\t")
             .map((token) => token.replaceAll(',', ''))
-            .map(t => Number(t) || t)
 
-        output.push([symbol, name, ...tokens])
-    }
-
-    return Object.fromEntries(Object.entries(output.map((entry) => {
         const [
-            symbol,
-            name,
-            account,
+            accountType,
             numberOfShares,
             averageAcquiredPrice_usd,
             currentPrice_usd,
@@ -50,84 +21,126 @@ export function parseRakutenRawData(rawInput: string): RakutenRawData {
             marketValue_jpy,
             compositionRatio,
             profit_jpy
-        ] = entry
+        ] = tokens
 
-        return {
-            symbol,
-            account,
-            numberOfShares,
-            averageAcquiredPrice_usd,
-            currentPrice_usd,
-            marketValue_usd,
-            marketValue_jpy,
-            compositionRatio: Number(compositionRatio.split("%")[0]),
-            profit_percentage: (currentPrice_usd - averageAcquiredPrice_usd) / averageAcquiredPrice_usd * 100,
-            profit_jpy,
-            profit_usd: (currentPrice_usd * numberOfShares) - (averageAcquiredPrice_usd * numberOfShares)
+        output[symbol] ??= {
+            accounts: {
+            },
         }
-    })
-        .reduce((acc, entry) => {
-            const { symbol, account, ...others } = entry
 
-            acc[symbol] ??= {
-                symbol,
-                account: {
-                    total: {
-                        numberOfShares: 0,
-                        averageAcquiredPrice_usd: 0,
-                        currentPrice_usd: 0,
-                        marketValue_usd: 0,
-                        marketValue_jpy: 0,
-                        compositionRatio: 0,
-                        profit_percentage: 0,
-                        profit_jpy: 0,
-                        profit_usd: 0
-                    }
+        output[symbol].accounts[accountType.trim()] = {
+            usd: {
+                numberOfShares: Number(numberOfShares),
+                averageAcquiredPrice: Number(averageAcquiredPrice_usd),
+                currentPrice: Number(currentPrice_usd),
+                change: 0,
+                change_percentage: 0,
+                openPrice: 0,
+                timestamp: 0,
+                marketValue: Number(marketValue_usd),
+                compositionRatio: parseCompositionRatioToken(compositionRatio),
+                profit_percentage: 0,
+                get profit() {
+                    return (this.currentPrice - this.averageAcquiredPrice) * this.numberOfShares
+                },
+            }
+        }
+    }
+
+    return output
+}
+
+
+if (import.meta.vitest) {
+    const { it, expect } = import.meta.vitest
+
+    it("able to parse rakuten data", () => {
+        const rawInput = `AMZN
+アマゾン・ドット・コム
+特定	6	91.06	86.08	516.48	68,237	1.78 %	-7,555.00
+AMZN
+アマゾン・ドット・コム
+NISA	20	105.18	86.08	1,721.60	227,457	5.94 %	-70,563.00
+TSLA
+テスラ
+NISA	15	38.46	109.59	1643.85	228,946	92.28 %	152,727.5`
+
+        const output = parseRakutenData(rawInput)
+
+        const expected: UserStockHolding = {
+            "AMZN": {
+                accounts: {
+                    "特定": {
+                        usd: {
+                            numberOfShares: 6,
+                            averageAcquiredPrice: 91.06,
+                            currentPrice: 86.08,
+                            change: 0,
+                            change_percentage: 0,
+                            openPrice: 0,
+                            timestamp: 0,
+                            marketValue: 516.48,
+                            compositionRatio: 1.78,
+                            profit_percentage: 0,
+                            profit: -29.880000000000024,
+                        }
+                    },
+                    "NISA": {
+                        usd: {
+                            numberOfShares: 20,
+                            averageAcquiredPrice: 105.18,
+                            currentPrice: 86.08,
+                            change: 0,
+                            change_percentage: 0,
+                            openPrice: 0,
+                            timestamp: 0,
+                            marketValue: 1721.6,
+                            compositionRatio: 5.94,
+                            profit_percentage: 0,
+                            profit: -382.00000000000017,
+                        }
+                    },
+                }
+            },
+            "TSLA": {
+                accounts: {
+                    "NISA": {
+                        usd: {
+                            numberOfShares: 15,
+                            averageAcquiredPrice: 38.46,
+                            currentPrice: 109.59,
+                            change: 0,
+                            change_percentage: 0,
+                            openPrice: 0,
+                            timestamp: 0,
+                            marketValue: 1643.85,
+                            compositionRatio: 92.28,
+                            profit_percentage: 0,
+                            profit: 1066.9499999999998,
+                        }
+                    },
                 }
             }
+        }
 
-            acc[symbol].account[account] = others
+        expect(output).toStrictEqual(expected)
+    })
+}
 
-            return acc
-        }, {} as RakutenRawData))
-        .map(([k, v]: [ string, RakutenSymbolData ]) => {
-            const { account, ...others } = v
+function parseCompositionRatioToken(token: string): number {
+    return Number(token.split('%')[0].trim())
+}
 
-            account.total = Object.values(account)
-                .reduce((acc: RakutenAccountData, x: RakutenAccountData) => {
-                    acc.currentPrice_usd = x.currentPrice_usd
+if (import.meta.vitest) {
+    const { test, expect } = import.meta.vitest
 
-                    if (acc.numberOfShares > 0) {
-                        acc.averageAcquiredPrice_usd = ((x.averageAcquiredPrice_usd * x.numberOfShares) + (acc.numberOfShares * acc.averageAcquiredPrice_usd))
-                            / (x.numberOfShares + acc.numberOfShares)
-                    } else {
-                        acc.averageAcquiredPrice_usd = x.averageAcquiredPrice_usd
-                    }
-
-                    acc.profit_percentage = (acc.currentPrice_usd - acc.averageAcquiredPrice_usd) / acc.averageAcquiredPrice_usd * 100
-                    acc.numberOfShares += x.numberOfShares
-                    acc.marketValue_usd += x.marketValue_usd
-                    acc.marketValue_jpy += x.marketValue_jpy
-                    acc.compositionRatio += x.compositionRatio
-                    acc.profit_jpy += x.profit_jpy
-                    acc.profit_usd += x.profit_usd
-
-                    return acc
-                }, {
-                    numberOfShares: 0,
-                    averageAcquiredPrice_usd: 0,
-                    currentPrice_usd: 0,
-                    marketValue_usd: 0,
-                    marketValue_jpy: 0,
-                    compositionRatio: 0,
-                    profit_percentage: 0,
-                    profit_jpy: 0,
-                    profit_usd: 0
-                })
-
-            return [k, {
-                ...others,
-                account
-            }]
-        }))
+    test.each([
+        [ '1.78 %', 1.78 ],
+        [ ' 5.94 %', 5.94 ],
+        [ ' 12.96  %', 12.96 ],
+        [ '', 0 ],
+        [ '%', 0],
+    ])('able to parse composition ratio token ( %s ) -> %d', (input, expected) => {
+        expect(parseCompositionRatioToken(input)).toStrictEqual(expected)
+    })
 }
