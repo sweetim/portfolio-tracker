@@ -4,7 +4,7 @@ import {  convertToStockSymbolKey, StockProfile, StockQuote, StockSymbolKeyFor }
 
 const FINNHUB_API_URL = "https://finnhub.io/api/v1"
 const FINNHUB_WSS_URL = "wss://ws.finnhub.io"
-const FINNHUB_API_TOKEN = "cets3eqad3i5jsala8g0cets3eqad3i5jsala8gg"
+const FINNHUB_API_TOKEN = import.meta.env.VITE_FINNHUB_API_TOKEN
 
 const axiosInstance = axios.create({
     baseURL: FINNHUB_API_URL
