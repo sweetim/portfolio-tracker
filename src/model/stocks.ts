@@ -21,17 +21,19 @@ export type StockSymbolKeyFor<T> = {
     [symbol: string]: T
 }
 
+export type CurrencyFor<T> = {
+    [currency in StockCurrency]?: T
+}
+
+export type AccountTypeFor<T> = {
+    [accountType: string]: T
+}
+
 export interface UserStockHolding {
     [symbol: string]: {
         profile?: StockProfile,
-        accounts: {
-            [accountType: string]: {
-                [currency in StockCurrency]?: UserStockData
-            },
-        },
-        summary?: {
-            [currency in StockCurrency]?: UserStockData
-        }
+        accounts: AccountTypeFor<CurrencyFor<UserStockData>>,
+        summary?: CurrencyFor<UserStockData>
     }
 }
 
